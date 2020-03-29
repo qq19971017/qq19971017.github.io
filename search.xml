@@ -1,9 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>设计模式笔记(2)——工厂模式</title>
+    <url>/2020/03/29/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%AC%94%E8%AE%B0-2-%E2%80%94%E2%80%94%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/</url>
+    <content><![CDATA[<h3 id="一-工厂模式概念"><a href="#一-工厂模式概念" class="headerlink" title="一. 工厂模式概念"></a>一. 工厂模式概念</h3><p>工厂模式是一种创建型模式，他的意义是专门创建一个类，我们在这个类中去完成我们需要创建的对象，这样既可以方便管理，又可以提高代码的可扩展性和灵活性。工厂模式包括简单工厂模式、工厂方法模式、抽象工厂模式，其中工厂方法模式就是我们常说的工厂模式。</p>
+<p>我们在开发初期通常是直接通过new来创建一个对象的，这样的方式无疑是最简单的，但是这样创建对象有很多不足的地方，我们可以通过一个例子来看：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LoginAction</span> </span>&#123;</span><br><span class="line">	<span class="keyword">private</span> UserDAO udao;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="title">LoginAction</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		udao = <span class="keyword">new</span> JDBCUserDAO(); <span class="comment">//创建对象</span></span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">execute</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="comment">//其他代码</span></span><br><span class="line">		udao.findUserById(); <span class="comment">//使用对象</span></span><br><span class="line">		<span class="comment">//其他代码</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>我们在LoginAction类中创建了一哦个UserDao对象udao，并在execute()方法中调用了udao对象的findUserById()方法。这样LoginAction对udao既有创建职责又有使用职责，在同一个类中将两种职责耦合在了一起，当我们有修改需求的时候，比如我们要创建的是UserDAO的子类的时候，我们就需要修改LoginAction()中的代码，违背了开闭原则。</p>
+<p>而工厂模式是通常解决这个问题好方法，我们可以创建一个UserDaoFactory由它来专门负责UserDao类及其子类对象的创建。当我们需要增加UserDao子类或者修改构造函数的时候，我们只需要维护UserDaoFactory而不影响其他相关类的使用。工厂模式一只强调的是当两个类A和B发生关联的时候，<strong>两者只会发生A使用B或者A创建B这两种关系，而不是同时发生。</strong> 并且工厂类帮我们封装了创建对象的细节，我们只要传递相应的参数，就可以帮助我们创建具体的对象。下面我们来介绍依次介绍3个工厂工行模式。</p>
+<h3 id="二-简单工厂模式"><a href="#二-简单工厂模式" class="headerlink" title="二. 简单工厂模式"></a>二. 简单工厂模式</h3><p>简单工厂模式又叫做静态工厂模式，他并不属于23种经典模式之中，我们从一个例子中先体验简单工厂模式。</p>
+<p>比如说我们需要生产pizza，一共有奶酪pizza和希腊pizza两种不同口味，我们创建一个工厂来负责生产这两种口味的pizza，代码如下</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Pizza</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String name;</span><br><span class="line">    <span class="function"><span class="keyword">abstract</span> <span class="keyword">public</span> <span class="keyword">void</span> <span class="title">prepare</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">eat</span><span class="params">()</span></span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"开动啦！吃："</span> + name);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getName</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> name;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setName</span><span class="params">(String name)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CheesePizza</span> <span class="keyword">extends</span> <span class="title">Pizza</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">prepare</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"准备一个奶酪披萨"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">GreekPizza</span> <span class="keyword">extends</span> <span class="title">Pizza</span></span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">prepare</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"准备一个希腊披萨"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SimpleFactory</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">public</span> Pizza <span class="title">createPizza</span><span class="params">(String name)</span></span>&#123;</span><br><span class="line">        Pizza pizza =<span class="keyword">null</span>;</span><br><span class="line">    </span><br><span class="line">        <span class="keyword">if</span>(name.equals(<span class="string">"cheese"</span>))&#123;</span><br><span class="line">            pizza = <span class="keyword">new</span> CheesePizza();</span><br><span class="line">            pizza.setName(<span class="string">"奶酪披萨"</span>);</span><br><span class="line">            pizza.prepare();</span><br><span class="line">        &#125;<span class="keyword">else</span> <span class="keyword">if</span> (name.equals(<span class="string">"greek"</span>))&#123;</span><br><span class="line">            pizza = <span class="keyword">new</span> GreekPizza();</span><br><span class="line">            pizza.setName(<span class="string">"希腊披萨"</span>);</span><br><span class="line">            pizza.prepare();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> pizza;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OrderPizza</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Pizza pizza = SimpleFactory.createPizza(<span class="string">"greek"</span>);</span><br><span class="line">        <span class="keyword">if</span>(pizza!=<span class="keyword">null</span>)&#123;</span><br><span class="line">            pizza.eat();</span><br><span class="line">        &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">            System.out.println(<span class="string">"没有pizza"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>当我们在订单中需要创建一个pizza的时候，我们会调用SimpleFactory中的方法createPizza来创建一个对象，SimpleFactory会根据参数来自主判断创建对象的类型。</p>
+<p>这种方法使用起来比较简单，表面上解决了OrderPizza中耦合的问题，但是他只是将逻辑判断中的代码转移到了工厂中，这会使得工厂类不满足ocp原则，在需要修改代码的时候我们需要维护工厂类的逻辑判断。</p>
+<h3 id="二-工厂方法模式"><a href="#二-工厂方法模式" class="headerlink" title="二. 工厂方法模式"></a>二. 工厂方法模式</h3><p>为了解决简单工厂模式的缺点，使得工厂类更加符合开闭原则。我们先使用一个抽象类去定义一个抽象的创建对象的方法，再由子类去继承这个抽象类，去专门创建具体的对象。</p>
+<p>还是上一个例子，但是我们分别创建了奶酪pizza工厂和希腊pizza工厂去继承一个抽象的工厂类。</p>
+<p>代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Factory</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> Pizza <span class="title">createPizza</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">GreekPizzaFactory</span> <span class="keyword">extends</span> <span class="title">Factory</span></span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Pizza <span class="title">createPizza</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        GreekPizza greekPizza = <span class="keyword">new</span> GreekPizza();</span><br><span class="line">        greekPizza.setName(<span class="string">"希腊披萨"</span>);</span><br><span class="line">        <span class="keyword">return</span> greekPizza;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CheesePizzaFactory</span> <span class="keyword">extends</span> <span class="title">Factory</span></span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Pizza <span class="title">createPizza</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> CheesePizza();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>这样写的好处就是，我们在增加或者删除不同口味pizza的时候，我们只需要创建不同的工厂去生产不同的pizza就可以了，而不用去修改factory中的代码。但是工厂方法模式也有一定的缺陷，就是当我们的产品增多时我们需要创建大量的具体工厂去生产不同的对象，导致系统类的个数成对增加，在一定程度上增加了系统的复杂性。</p>
+<h3 id="二-抽象工厂模式"><a href="#二-抽象工厂模式" class="headerlink" title="二. 抽象工厂模式"></a>二. 抽象工厂模式</h3><p>在工厂方法模式中具体工厂负责生产具体的产品，每一个具体工厂对应一种具体产品，工厂方法也具有唯一性，一般情况下，一个具体工厂中只有一个工厂方法或者一组重载的工厂方法。但是有时候我们需要一个工厂可以提供多个产品对象，而不是单一的产品对象。</p>
+<p>为了更清晰地理解工厂方法模式，需要先引入两个概念：</p>
+<ul>
+<li>产品等级结构 ：产品等级结构即产品的继承结构，如一个抽象类是电视机，其子类有海尔电视机、海信电视机、TCL电视机，则抽象电视机与具体品牌的电视机之间构成了一个产品等级结构，抽象电视机是父类，而具体品牌的电视机是其子类。</li>
+<li>产品族 ：在抽象工厂模式中，产品族是指由同一个工厂生产的，位于不同产品等级结构中的一组产品，如海尔电器工厂生产的海尔电视机、海尔电冰箱，海尔电视机位于电视机产品等级结构中，海尔电冰箱位于电冰箱产品等级结构中。</li>
+</ul>
+<p>当系统所提供的工厂所需生产的具体产品并不是一个简单的对象，而是多个位于不同产品等级结构中属于不同类型的具体产品时需要使用抽象工厂模式。</p>
+<p>抽象工厂模式是所有形式的工厂模式中最为抽象和最具一般性的一种形态。</p>
+<p>抽象工厂模式与工厂方法模式最大的区别在于，工厂方法模式针对的是一个产品等级结构，而抽象工厂模式则需要面对多个产品等级结构，一个工厂等级结构可以负责多个不同产品等级结构中的产品对象的创建 。当一个工厂等级结构可以创建出分属于不同产品等级结构的一个产品族中的所有对象时，抽象工厂模式比工厂方法模式更为简单、有效率。<br>这里我们看一个uml图理解一下</p>
+<p><img src="/images/pasted-12.png" alt="upload successful"></p>
+<p>当一个产品族中的多个对象被设计成一起工作时，它能够保证客户端始终只使用同一个产品族中的对象。这对一些需要根据当前环境来决定其行为的软件系统来说，是一种非常实用的设计模式。</p>
+<p>增加新的具体工厂和产品族很方便，无须修改已有系统，符合“开闭原则”。</p>
+<h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><p>视频：<br><a href="https://www.bilibili.com/video/av57936239" target="_blank" rel="noopener">尚硅谷Java设计模式，韩顺平图解java设计模式</a></p>
+<p>文献：<br><a href="https://design-patterns.readthedocs.io/zh_CN/latest/creational_patterns/abstract_factory.html" target="_blank" rel="noopener">3. 抽象工厂模式(Abstract Factory)</a></p>
+<p><a href="https://segmentfault.com/a/1190000015050674" target="_blank" rel="noopener">深入理解工厂模式</a></p>
+<p><a href="https://blog.csdn.net/lovelion/article/details/7523392" target="_blank" rel="noopener">创建对象与使用对象——谈谈工厂的作用</a></p>
+]]></content>
+      <categories>
+        <category>设计模式</category>
+      </categories>
+      <tags>
+        <tag>设计模式</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>设计模式笔记(1)——单例模式</title>
     <url>/2020/03/13/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%AC%94%E8%AE%B0-1-%E2%80%94%E2%80%94%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/</url>
-    <content><![CDATA[<h3 id="一-单例模式概念"><a href="#一-单例模式概念" class="headerlink" title="一. 单例模式概念"></a>一. 单例模式概念</h3><p>单例模式顾名思义就是保证某个类只有一个实例的设计方式，他负责自己创建实例，且保证实例的唯一性。这种实例的唯一性，可以避免某些高频率使用的对象被频繁的创建和销毁，提高了效率，节省了系统资源。单例模式向外界提供了创建该类实例的方法，并私有化构造方法，使得外界不能直接通过new构造实例。</p>
+    <content><![CDATA[<p>单例模式顾名思义就是保证某个类只有一个实例的设计方式，他负责自己创建实例，且保证实例的唯一性。这种实例的唯一性，可以避免某些高频率使用的对象被频繁的创建和销毁，提高了效率，节省了系统资源。单例模式向外界提供了创建该类实例的方法，并私有化构造方法，使得外界不能直接通过new构造实例。</p>
 <p>单例模式使用的场景:需要频繁的进行创建和销毁的对象、创建对象时耗时过多或耗费资源过多(即:重量级<br>对象)，但又经常用到的对象、工具类对象、频繁访问数据库或文件的对象(比如数据源、session 工厂等)。</p>
 <p>单例模式分为饿汉式和饱汉式，下面我们来详细介绍一下这两种设计模式。</p>
 <h3 id="二-饿汉式"><a href="#二-饿汉式" class="headerlink" title="二. 饿汉式"></a>二. 饿汉式</h3><p>饿汉式是通过直接声明一个该类静态成员变量并在加载的时候就直接创建实例。我们可以用以下的方法进行构造，代码如下：</p>
@@ -38,6 +87,9 @@
 <h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><p>视频：<br><a href="https://www.bilibili.com/video/av57936239" target="_blank" rel="noopener">尚硅谷Java设计模式，韩顺平图解java设计模式</a></p>
 <p>文献：<br><a href="https://blog.csdn.net/FU250/article/details/79721197" target="_blank" rel="noopener">双重检查单例为什么要加volatile</a><br><a href="https://blog.csdn.net/qq_35098526/article/details/79893628" target="_blank" rel="noopener">单例模式懒汉式和饿汉式区别</a></p>
 ]]></content>
+      <categories>
+        <category>设计模式</category>
+      </categories>
       <tags>
         <tag>设计模式</tag>
       </tags>
@@ -192,6 +244,9 @@
 <p>文章：</p>
 <p><a href="https://juejin.im/post/5a810b0e5188257a5c606a85" target="_blank" rel="noopener">Java类加载机制（全套）</a><br><a href="https://www.cnblogs.com/aspirant/p/7200523.html" target="_blank" rel="noopener">Java 类加载机制(阿里)-何时初始化类</a><br><a href="https://blog.csdn.net/ns_code/article/details/17881581" target="_blank" rel="noopener">【深入Java虚拟机】之四：类加载机制</a><br><a href="https://blog.csdn.net/ns_code/article/details/17845821" target="_blank" rel="noopener">【深入Java虚拟机】之三：类初始化</a><br><a href="https://blog.csdn.net/zhangliangzi/article/details/51338291" target="_blank" rel="noopener">JVM类加载机制详解（二）类加载器与双亲委派模型</a><br><a href="https://blog.csdn.net/javazejian/article/details/73413292" target="_blank" rel="noopener"> 深入理解Java类加载器(ClassLoader)</a></p>
 ]]></content>
+      <categories>
+        <category>JVM 学习</category>
+      </categories>
       <tags>
         <tag>JVM</tag>
       </tags>
