@@ -1,6 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Docker 基础学习(1)</title>
+    <url>/2020/05/23/Docker-%E5%AD%A6%E4%B9%A0/</url>
+    <content><![CDATA[<h3 id="docker基础学习-1"><a href="#docker基础学习-1" class="headerlink" title="docker基础学习(1)"></a>docker基础学习(1)</h3><p>今天在天池参加了一个比赛，里面涉及到了docker的容器技术的打包，之前一直没有接触过这些东西，所以乘着周末学习了一些docker基础知识。</p>
+<h4 id="一-什么是docker"><a href="#一-什么是docker" class="headerlink" title="一. 什么是docker"></a>一. 什么是docker</h4><p>我们从官方文档里面可以看到，docker是为程序员提供一个可以构建、运行和移植的容器。这个容器可以帮助程序员们快速部署应用，这样的功能被称之为容器化。</p>
+<p>容器化有以下几个特点：</p>
+<ul>
+<li>灵活：即使是很复杂的程序，也可以被放在容器中。</li>
+<li>轻量级：容器内的应用运行于主机的内核系统，并可以共享内核资源，这样就比虚拟机更轻量化，可以快速创建和启动。</li>
+<li>可移植性：容器可以在本地创建，在云端部署，并在任何地方运行。</li>
+<li>松耦合： 容器具有高度的封装性，可以在不破坏其他容器的前提下完成容器的升级或替换。</li>
+<li>可扩展： 我们可以自动扩充并自动部署容器副本。</li>
+<li>安全性：我们不需要手动配置任何参数，容器会帮助我们自动约束和隔离应用。</li>
+</ul>
+<p>docker容器并不仅仅是一个正在运行的线程，它增加了一些封装的功能使得其与主机和其他的容器相互隔离，实现隔离功能的最主要的原因是容器可以和内部的镜像文件进行交互，一个镜像文件包括了程序运行的一切代码或二进制文件、依赖项、以及所需的任何其他的文件系统对象。</p>
+<h4 id="二-docker和VM的对比"><a href="#二-docker和VM的对比" class="headerlink" title="二. docker和VM的对比"></a>二. docker和VM的对比</h4><p>由下图我们可以看到，docker在linux本地运行，并与其他容器共享主机的内核，当他运行一个独立的进程的时候，不会占用其他可执行文件的内存，容器内部只有程序以及所依赖的二进制文件和依赖哭，并与其他容器相隔离，这种轻巧的特性使得容器可以在几秒内启动。<br><img src="/images/pasted-15.png" alt="upload successful"></p>
+<p>相比之下虚拟机的虚拟的是整个操作系统，包括硬件的设置，这样的方式使得VM会产生大量的开销，超出了应用程序逻辑所消耗的的开销。</p>
+<h4 id="三-docker架构"><a href="#三-docker架构" class="headerlink" title="三. docker架构"></a>三. docker架构</h4><p>在看架构图之前，我们先来了解一下docker的三个基本概念：镜像、容器、仓库。</p>
+<ul>
+<li>镜像：镜像是只读，里面有需要运行的文件。它通常是用来创建容器的，镜像可以创建多个容器；我们可以在本地创建镜像也可以通过docker pull从仓库中下载。</li>
+<li>容器：容器是镜像的运行的一个实例，我们在使用镜像创建容器的时候可以配置一定的参数，来约束容器的运行。容器的运行是相互独立的，容器之间是不会影响的，这样可以保证容器可以运行在一个相对安全的地方。</li>
+<li>仓库：仓库是用来管理、存储镜像的，最有名的仓库就是docker hub，其他的比如国内阿里云的镜像仓库、网易晕的镜像仓库都是用来管理镜像的远程仓库，他们为我们提供下载上传渠道。<br><img src="/images/pasted-17.png" alt="upload successful"></li>
+</ul>
+<p>如上图，docker架构一共分为三个部分，docker 客户端， docker服务端，和docker注册中心。docker客户端用于发送docker指令，并与docker的守护进程进行通信，守护进程会对指令进行分析，并执行指令，注册中心就是仓库，它用来共享和管理dicker镜像，当我们使用docker pull的时候，docker守护进程会从指定的仓库中拉取镜像并放到本地，这样我们在使用docker run创建容器的时候，就可以直接使用本地的镜像直接创建容器。</p>
+<h4 id="四-docker常用指令"><a href="#四-docker常用指令" class="headerlink" title="四. docker常用指令"></a>四. docker常用指令</h4><p>docker 有一些比较常用的指令</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">1. 从仓库拉取镜像</span><br><span class="line">docker pull [image name:tag]</span><br><span class="line">2. 查看本地的所有镜像</span><br><span class="line">docker images</span><br><span class="line">3. 查看运行的容器</span><br><span class="line">docker ps</span><br><span class="line">4. 查看所有的容器</span><br><span class="line">docker ps -a</span><br><span class="line">5. 删除镜像</span><br><span class="line">docker rmi [image name:tag]</span><br><span class="line">6. 启动、停止、重启容器命令</span><br><span class="line">docker start container_name&#x2F;container_id</span><br><span class="line">docker stop container_name&#x2F;container_id</span><br><span class="line">docker restart container_name&#x2F;container_id</span><br><span class="line">7.  -i 以交互模式运行容器</span><br><span class="line">	-t 为容器重新分配一个伪输入终端</span><br><span class="line">    -d 在后台运行  </span><br><span class="line">docker run -i -t container_name&#x2F;container_id</span><br><span class="line">8. 删除容器的命令：</span><br><span class="line">docker rm container_name&#x2F;container_id</span><br><span class="line">9. 查看docker信息</span><br><span class="line">docker info</span><br><span class="line">10. 使用镜像创建docker容器</span><br><span class="line">docker run container_name&#x2F;container_id</span><br><span class="line">11. 查看docker 日志</span><br><span class="line">	-t 打印时间</span><br><span class="line">    -f 持续打印</span><br><span class="line">    -tail 显示日志总数</span><br><span class="line">docker logs</span><br><span class="line">12. 进入后台</span><br><span class="line">docker attach container_id</span><br><span class="line">13. 进入后台，退出容器不会停止</span><br><span class="line">docker exec -it container_id &#x2F;bin&#x2F;bash</span><br></pre></td></tr></table></figure>
+<p>更多的指令我们可以在docker –help中查看。</p>
+<h4 id="四-参考文献"><a href="#四-参考文献" class="headerlink" title="四. 参考文献"></a>四. 参考文献</h4><p><a href="https://www.bilibili.com/video/BV18b411K7q7" target="_blank" rel="noopener">尚硅谷docker核心技术</a><br><a href="https://docs.docker.com/" target="_blank" rel="noopener">docker官方文档</a></p>
+]]></content>
+      <categories>
+        <category>docker</category>
+      </categories>
+      <tags>
+        <tag>dokcer</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>SpringBoot-2.2.6 无法配置@ConfigurationProperties</title>
     <url>/2020/04/24/SpringBoot-2-2-6-%E6%97%A0%E6%B3%95%E9%85%8D%E7%BD%AE-ConfigurationProperties/</url>
     <content><![CDATA[<p>今天在使用SpringBoot 2.2.6 配置@ConfigurationProperties注解是，发生错误，看一些博客也没有解决问题，在这里记录一下。</p>
