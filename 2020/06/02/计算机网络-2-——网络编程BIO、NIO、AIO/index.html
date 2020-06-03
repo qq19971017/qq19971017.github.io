@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"qq19971017.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="计算机网络(2)——网络编程BIO、NIO 本来在学习nginx，想写一些nginx的blog，但是在看一写blog的时候，看到了io多路复用，epoll等概念，确认过眼神，是没学过的概念，于是由转而看起了网络编程多线程相关的一些知识，也是学到了很多新的知识。  一. 同步、异步、阻塞、非阻塞同步、异步是两种通信机制，同步是指在调用函数的时候，必须要有返回结果才能够继续往下执行；异步则是指，调用在">
+<meta property="og:type" content="article">
+<meta property="og:title" content="计算机网络(2)——网络编程BIO、NIO">
+<meta property="og:url" content="https://qq19971017.github.io/2020/06/02/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-2-%E2%80%94%E2%80%94%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8BBIO%E3%80%81NIO%E3%80%81AIO/index.html">
+<meta property="og:site_name" content="学无止境">
+<meta property="og:description" content="计算机网络(2)——网络编程BIO、NIO 本来在学习nginx，想写一些nginx的blog，但是在看一写blog的时候，看到了io多路复用，epoll等概念，确认过眼神，是没学过的概念，于是由转而看起了网络编程多线程相关的一些知识，也是学到了很多新的知识。  一. 同步、异步、阻塞、非阻塞同步、异步是两种通信机制，同步是指在调用函数的时候，必须要有返回结果才能够继续往下执行；异步则是指，调用在">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-25.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-26.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-27.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-28.png">
+<meta property="article:published_time" content="2020-06-02T02:17:00.000Z">
+<meta property="article:modified_time" content="2020-06-03T09:10:06.932Z">
+<meta property="article:author" content="Jiajun Ma">
+<meta property="article:tag" content="计算机网络">
+<meta property="article:tag" content="socket">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://qq19971017.github.io/images/pasted-25.png">
+
+<link rel="canonical" href="https://qq19971017.github.io/2020/06/02/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-2-%E2%80%94%E2%80%94%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8BBIO%E3%80%81NIO%E3%80%81AIO/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>计算机网络(2)——网络编程BIO、NIO | 学无止境</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="学无止境" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">学无止境</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/06/02/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-2-%E2%80%94%E2%80%94%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8BBIO%E3%80%81NIO%E3%80%81AIO/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Jiajun Ma">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="学无止境">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          计算机网络(2)——网络编程BIO、NIO
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-02 10:17:00" itemprop="dateCreated datePublished" datetime="2020-06-02T10:17:00+08:00">2020-06-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-06-03 17:10:06" itemprop="dateModified" datetime="2020-06-03T17:10:06+08:00">2020-06-03</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="计算机网络-2-——网络编程BIO、NIO"><a href="#计算机网络-2-——网络编程BIO、NIO" class="headerlink" title="计算机网络(2)——网络编程BIO、NIO"></a>计算机网络(2)——网络编程BIO、NIO</h3><blockquote>
+<p>本来在学习nginx，想写一些nginx的blog，但是在看一写blog的时候，看到了io多路复用，epoll等概念，确认过眼神，是没学过的概念，于是由转而看起了网络编程多线程相关的一些知识，也是学到了很多新的知识。</p>
+</blockquote>
+<h4 id="一-同步、异步、阻塞、非阻塞"><a href="#一-同步、异步、阻塞、非阻塞" class="headerlink" title="一. 同步、异步、阻塞、非阻塞"></a>一. 同步、异步、阻塞、非阻塞</h4><p>同步、异步是两种通信机制，同步是指在调用函数的时候，必须要有返回结果才能够继续往下执行；异步则是指，调用在发出的时候，调用者不会立刻得到结果，而是在调用发出之后，被调用者通过状态、通知来通知调用者，或者通过回调函数处理这个调用。<br><img src="/images/pasted-25.png" alt="upload successful"><br>上图比较清晰的给我们解释了什么事同步IO，什么是异步IO，同步IO是当系统调用发生时，内核会将程序挂起，CPU会从用户空间切换到内核空间进行数据交换，完成系统调用时，CPU返回用户空间并返回结果，进程由挂起状态转换为就绪状态，准备执行下面的命令。而异步IO是当系统调用发生时，系统会立即给程序发生一个结果，好让程序继续往下执行，当系统调用结束时，系统通通知调用进程。（设置一个用户空间特殊的变量值或者触发一个signal或者产生一个软中断 或者调用应用程序的回调函数）</p>
+<p>而阻塞和非阻塞是种状态，它们关注的是程序在等待结果时的状态，阻塞是指程序在调用结果返回直线，当前线程会被挂起，只有在得到结果之后才能返回。这种被挂起的状态被称为阻塞。非阻塞是指线程在结果返回之前不会被挂起，该调用会执行其他的事情。</p>
+<p>同步IO可以分为阻塞IO和非阻塞IO，我们之后谈论的BIO就是阻塞IO，NIO是非阻塞IO，而aio就是异步io。</p>
+<h4 id="二-BIO模型"><a href="#二-BIO模型" class="headerlink" title="二. BIO模型"></a>二. BIO模型</h4><p>BIO又叫做blocking IO，阻塞模型，下面我们来说BIO流程，注意下面所说的都是针对多线程的。</p>
+<p><img src="/images/pasted-26.png" alt="upload successful"><br>采用BIO的服务端会用一个socket去监听窗口，当有客户端连接进来时，socket会创建一个新的线程用于和客户端进行交互，通过输出流返回应答给客户端，线程销毁，这是典型的 请求——应答 模型。<br>下面上代码：<br><em>BIOServer</em></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> bio;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.io.InputStream;</span><br><span class="line"><span class="keyword">import</span> java.io.OutputStream;</span><br><span class="line"><span class="keyword">import</span> java.net.ServerSocket;</span><br><span class="line"><span class="keyword">import</span> java.net.Socket;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BIOServer</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> PORT = <span class="number">12345</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> ServerSocket server;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        start(PORT);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">(<span class="keyword">int</span> port)</span> <span class="keyword">throws</span> IOException</span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(server != <span class="keyword">null</span>) <span class="keyword">return</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            server = <span class="keyword">new</span> ServerSocket(port);</span><br><span class="line">            System.out.println(<span class="string">"服务器已启动， 端口号:"</span> + port);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">while</span> (<span class="keyword">true</span>)&#123;</span><br><span class="line">                Socket socket = server.accept();</span><br><span class="line">                <span class="keyword">new</span> Thread(<span class="keyword">new</span> BIOServerHandler(socket)).start();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;<span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="keyword">if</span>(server != <span class="keyword">null</span>)&#123;</span><br><span class="line">                System.out.println(<span class="string">"服务器关闭"</span>);</span><br><span class="line">                server.close();</span><br><span class="line">                server = <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><em>BIO服务端交互代码</em></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> bio;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.BufferedReader;</span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.io.InputStreamReader;</span><br><span class="line"><span class="keyword">import</span> java.io.PrintWriter;</span><br><span class="line"><span class="keyword">import</span> java.net.Socket;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BIOServerHandler</span> <span class="keyword">implements</span> <span class="title">Runnable</span></span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Socket socket;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">BIOServerHandler</span><span class="params">(Socket socket)</span></span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.socket = socket;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        BufferedReader in = <span class="keyword">null</span>;</span><br><span class="line">        PrintWriter out = <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            in = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(socket.getInputStream()));</span><br><span class="line">            out = <span class="keyword">new</span> PrintWriter(socket.getOutputStream(), <span class="keyword">true</span>);</span><br><span class="line">            String expression;</span><br><span class="line">            String result;</span><br><span class="line">            <span class="keyword">while</span> (<span class="keyword">true</span>)&#123;</span><br><span class="line">                <span class="comment">//通过BufferedReader读取一行</span></span><br><span class="line">                <span class="comment">//如果已经读到输入流尾部，返回null,退出循环</span></span><br><span class="line">                <span class="comment">//如果得到非空值，就尝试计算结果并返回</span></span><br><span class="line">                <span class="keyword">if</span>((expression = in.readLine()) ==  <span class="keyword">null</span>) <span class="keyword">break</span>;</span><br><span class="line">                System.out.println(<span class="string">"服务器收到消息："</span> + expression);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    result = <span class="string">"to do！"</span>;</span><br><span class="line">                &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">                    result = <span class="string">"计算错误"</span> + e.getMessage();</span><br><span class="line">                &#125;</span><br><span class="line">                out.println(result);</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;<span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="keyword">if</span>(in != <span class="keyword">null</span>)&#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    in.close();</span><br><span class="line">                &#125;<span class="keyword">catch</span> (IOException e)&#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(out != <span class="keyword">null</span>)&#123;</span><br><span class="line">                out.close();</span><br><span class="line">                out = <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(socket!= <span class="keyword">null</span>)&#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    socket.close();</span><br><span class="line">                &#125;<span class="keyword">catch</span> (IOException e)&#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                socket = <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><em>BIOClient</em></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> bio;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.print.DocFlavor;</span><br><span class="line"><span class="keyword">import</span> java.io.*;</span><br><span class="line"><span class="keyword">import</span> java.net.Socket;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BIOClient</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> PORT = <span class="number">12345</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> String IP = <span class="string">"localhost"</span>;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">send</span><span class="params">(String expression)</span></span>&#123;</span><br><span class="line">        send(PORT, expression);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">send</span><span class="params">(<span class="keyword">int</span> port, String expression)</span></span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"发送消息为："</span> + expression);</span><br><span class="line">        Socket socket = <span class="keyword">null</span>;</span><br><span class="line">        BufferedReader in = <span class="keyword">null</span>;</span><br><span class="line">        PrintWriter out = <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">try</span>&#123;</span><br><span class="line">            socket = <span class="keyword">new</span> Socket(IP, PORT);</span><br><span class="line">            in = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(socket.getInputStream()));</span><br><span class="line">            out = <span class="keyword">new</span> PrintWriter(socket.getOutputStream(),<span class="keyword">true</span>);</span><br><span class="line">            out.println(expression);</span><br><span class="line">            System.out.println(<span class="string">"结果为:"</span>+ in.readLine());</span><br><span class="line">        &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;<span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="keyword">if</span>(in != <span class="keyword">null</span>)&#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    in.close();</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                in = <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(out != <span class="keyword">null</span>)&#123;</span><br><span class="line">                out.close();</span><br><span class="line">                out = <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(socket != <span class="keyword">null</span>)&#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    socket.close();</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                socket = <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><em>测试代码</em></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> bio;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.net.ServerSocket;</span><br><span class="line"><span class="keyword">import</span> java.util.Random;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    BIOServer.start();</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">        Thread.sleep(<span class="number">100</span>);</span><br><span class="line">        <span class="keyword">char</span> operators[] = &#123;<span class="string">'+'</span>,<span class="string">'-'</span>,<span class="string">'*'</span>,<span class="string">'/'</span>&#125;;</span><br><span class="line">        Random random = <span class="keyword">new</span> Random(System.currentTimeMillis());</span><br><span class="line">        <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                <span class="keyword">while</span> (<span class="keyword">true</span>)&#123;</span><br><span class="line">                    String expression = random.nextInt(<span class="number">10</span>)+<span class="string">""</span>+operators[random.nextInt(<span class="number">4</span>)]+(random.nextInt(<span class="number">10</span>)+<span class="number">1</span>);</span><br><span class="line">                    BIOClient.send(expression);</span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        Thread.currentThread().sleep(random.nextInt(<span class="number">1000</span>));</span><br><span class="line">                    &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                        e.printStackTrace();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>BIO的只适用与小并发量且是一问一答的程序，因为每有一个客户端连接进来，服务端就会创建一个新的线程用于对接，线程也会占用内存资源，并且创建线程需要进行系统调用，当线程数量快速膨胀后，cpu需要不断切换线程，这样上下文切换将会占用cpu大量的时间。最重要的缺点是accept是阻塞的，这是无法解决根本问题的，而NIO作为非阻塞模型，就可以很好解决这个问题。</p>
+<h4 id="三-NIO模型"><a href="#三-NIO模型" class="headerlink" title="三. NIO模型"></a>三. NIO模型</h4><p>Nio官方叫法new io，我们习惯称之为no-block io应为非阻塞是nio的最大的特点。对于NIO，如果TCP RecvBUffer有数据，就把数据从网卡读到内存，并且返回给用户；反之则返回0，永远不会阻塞。在NIO中用户最关心的是，“我可以读了”。本质上来说，NIO模型中，socket主要的读写、注册、接收函数，在等待就绪阶段是非堵塞的，真正的IO操作是同步阻塞的。<br>我们回忆BIO模型，之所以需要多线程，是因为在进行IO操作的时候，一是没有办法知道到底能不能写，能不能读，只能等待，即使通过各种估算，算出来的操作系统没有能力进行读写，也没有办法在socket.read()和socket.write()函数中返回，这两个函数无法进行有效的中断，所以除了多开线程另其炉灶，没有好的办法利用CPU。NIO的读写函数可以立即返回，这就给我们不开线程，这就给我们不开线程利用CPU的最好机会，如果一个连接不能读写，我们可以吧这件事记下来，通常的方式是在selector上注册标记位，然后切换到其他就绪的连接继续进行读写。</p>
+<p>NIO最重要的三个基本概念是channel、buffer、selector。</p>
+<h5 id="1-channel"><a href="#1-channel" class="headerlink" title="1.channel"></a>1.channel</h5><p>channel 我们通过翻译可以看出，它是一个通道，可以与硬件如网卡、硬盘进行连接，当通道被被打开时，我们可以向通道中读写数据。和流的概念类似但是通道是双向的，而流只具有单向性，并且通道可以支持多线程的读写，比较重要的的一些通道如FileChannel、ServerSocketChannel、SocketChannel都是现在比较常用的类，再多线程中发挥着重要作用，由于我们这只将网络编程，所以我下面重点介绍ServerSocketChannel、SocketChannel。</p>
+<blockquote>
+<p><em>ServerSocketChannel</em></p>
+</blockquote>
+<p>ServerSocketChannel 是用于TCP服务端的通道，他的作用和标准IO中的ServerSocket类似，可以绑定端口进行监听。和ServerSocket相比，ServerSocketChannel最大的优势是可以设置为非阻塞的状态，当没有客户端连接进来时，ServerSocketChannel可以立刻返回null，如果有客户端连接时，就会和ServerSocket一样返回一个Socket，除此之外ServerSocketChannel是多线程安全的，支持多线程并发。</p>
+<blockquote>
+<p><em>SocketChannel</em></p>
+</blockquote>
+<p>SocketChannel 是用于TCP客户端的通道，它同样可以设置非阻塞模式对服务端进行连接，以及对通道内的数据进行读写。SocketChannel还有一个特点就是支持异步关闭，如果SocketChannel在一个线程上read阻塞，另一个线程对该SocketChannel调用shutdownInput，则读阻塞的线程将返回-1表示没有读取任何数据；如果SocketChannel在一个线程上write阻塞，另一个线程对该SocketChannel调用shutdownOutput，则写阻塞的线程将抛出AsynchronousCloseException。</p>
+<h5 id="2-buffer"><a href="#2-buffer" class="headerlink" title="2.buffer"></a>2.buffer</h5><p>Buffer通常与Channel进行交互，数据从通道读入缓冲区，或者从缓冲区写入通道中，缓冲区本质上是一个可以写入数据的数组，之后可以读取数据，Buffer对象包装了此内存块，可以更轻松的使用内存块。</p>
+<p>使用buffer时通常遵循以下几个步骤：</p>
+<ol>
+<li>将数据写入缓冲区</li>
+<li>调用buffer.flip()反转读写模式</li>
+<li>从缓冲区读取数据</li>
+<li>调用buffer.clear()或者buffer.compact()清除缓冲区的内容。</li>
+</ol>
+<p>将数据写入Buffer 时，Buffer 会跟踪写入的数据量。 当需要读取数据时，就使用 flip() 方法将缓冲区从写入模式切换到读取模式。 在读取模式下，缓冲区允许读取写入缓冲区的所有数据。</p>
+<p>读完所有数据之后，就需要清除缓冲区，以便再次写入。 可以通过两种方式执行此操作：通过调用 clear() 或调用 compact() 。区别在于 clear() 是方法清除整个缓冲区，而 compact() 方法仅清除已读取的数据，未读数据都会移动到缓冲区的开头，新数据将在未读数据之后写入缓冲区。</p>
+<p>buffer有一些基本概念：</p>
+<ol>
+<li>capacity：指的时缓冲区的容量，是他所包含的元素的数量，不能为负并且不能够更改。</li>
+<li>position：缓冲去的位置， 是下一个要读取或者要写入的元素的索引。不能为负，并且不能够大于limit</li>
+<li>limit：缓冲区的限制，缓冲区的限制不能为负，并且不能够大于capacity</li>
+</ol>
+<p>另外还有标记 mark ，<br>标记、位置、限制和容量值遵守以下不变式：<br>0 &lt;= mark&lt;= position &lt;= limit&lt;= capacity</p>
+<p>position和limit的含义取决于Buffer是处于读取还是写入模式。无论缓冲模式如何，capacity总是一样表示容量。</p>
+<p>以下是写入和读取模式下的容量，位置和限制的说明：<br><img src="/images/pasted-27.png" alt="upload successful"></p>
+<p><strong>capacity</strong></p>
+<blockquote>
+<p>作为存储器块，缓冲区具有一定的固定大小，也称为“容量”。 只能将 capacity 多的 byte，long，char 等写入缓冲区。 缓冲区已满后，需要清空它（读取数据或清除它），然后才能将更多数据写入。</p>
+</blockquote>
+<p><strong>position</strong></p>
+<blockquote>
+<p>将数据写入缓冲区时，可以在某个位置执行操作。 position 初始值为 0 ，当一个 byte，long，char 等已写入缓冲区时，position 被移动，指向缓冲区中的下一个单元以插入数据。 position 最大值为 capacity -1</p>
+</blockquote>
+<blockquote>
+<p>从缓冲区读取数据时，也可以从给定位置开始读取数据。 当缓冲区从写入模式切换到读取模式时，position 将重置为 0 。当从缓冲区读取数据时，将从 position 位置开始读取数据，读取后会将 position 移动到下一个要读取的位置。</p>
+</blockquote>
+<p><strong>limit</strong></p>
+<blockquote>
+<p>在写入模式下，Buffer 的 limit 是可以写入缓冲区的数据量的限制，此时 limit=capacity。</p>
+</blockquote>
+<blockquote>
+<p>将缓冲区切换为读取模式时，limit 表示最多能读到多少数据。 因此，当将 Buffer 切换到读取模式时，limit被设置为之前写入模式的写入位置（position ），换句话说，你能读到之前写入的所有数据（例如之前写写入了 6 个字节，此时 position=6 ，然后切换到读取模式，limit 代表最多能读取的字节数，因此 limit 也等于 6）。</p>
+</blockquote>
+<p><strong>分配缓冲区</strong><br>buffer 在一开始需要使用allocate来分配缓冲区的大小，缓冲区的大小决定了capacity的大小。例子如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ByteBuffer buffer = ByteBuffer.allocate(<span class="number">48</span>); <span class="comment">//创建容量为48字节的缓冲区</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>将数据写入缓冲区</strong><br>可以通过两种方式将数据写入 Buffer：</p>
+<ol>
+<li>将数据从通道写入缓冲区</li>
+<li>通过缓冲区的 put() 方法,自己将数据写入缓冲区。<br>这是一个示例，显示了 Channel 如何将数据写入 Buffer：</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> data = fileChannel.read(buffer); <span class="comment">// 将 Channel 的数据读入缓冲区，返回读入到缓冲区的字节数</span></span><br><span class="line">buffer.put(<span class="number">127</span>); <span class="comment">// 此处的 127 是 byte 类型</span></span><br></pre></td></tr></table></figure>
+
+<p><em>flip() 切换缓冲区的读写模式</em><br>flip() 方法将 Buffer 从写入模式切换到读取模式。 调用 flip() 会将 position 设置回 0，并将 limit 的值设置为切换之前的 position 值。换句话说，limit 表示之前写进了多少个 byte、char 等 —— 现在能读取多少个 byte、char 等。</p>
+<p><strong>从缓冲区读取数据</strong><br>有两种方法可以从 Buffer 中读取数据：</p>
+<ol>
+<li>将数据从缓冲区读入通道。</li>
+<li>使用 get() 方法之一，自己从缓冲区读取数据。<br>以下是将缓冲区中的数据读入通道的示例：</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> bytesWritten = fileChannel.write(buffer);</span><br><span class="line"><span class="keyword">byte</span> aByte = buffer.get();    </span><br></pre></td></tr></table></figure>
+
+<p>和 put() 方法一样，get() 方法也有许多其他版本，允许以多种不同方式从 Buffer 中读取数据。有关更多详细信息，请参阅JavaDoc以获取具体的缓冲区实现。</p>
+<p><strong>rewind() 倒带</strong><br>Buffer对象的 rewind() 方法将 position 设置回 0，因此可以重读缓冲区中的所有数据， limit 则保持不变。</p>
+<p><strong>clear() 和 compact()</strong><br>如果调用 clear() ,则将 position 设置回 0 ，并将 limit 被设置成 capacity 的值。换句话说，Buffer 被清空了。 但是 Buffer 中的实际存放的数据并未清除。</p>
+<p>如果在调用 clear() 时缓冲区中有任何未读数据，数据将被“遗忘”，这意味着不再有任何标记告诉读取了哪些数据，还没有读取哪些数据。</p>
+<p>如果缓冲区中仍有未读数据，并且想稍后读取它，但需要先写入一些数据，这时候应该调用 compact() ，它会将所有未读数据复制到 Buffer 的开头，然后它将 position 设置在最后一个未读元素之后。 limit 属性仍设置为 capacity ，就像 clear() 一样。 现在缓冲区已准备好写入，并且不会覆盖未读数据。</p>
+<p><strong>mark() 和 reset()</strong><br>以通过调用 Buffer 对象的 mark() 方法在 Buffer 中标记给定位置。 然后，可以通过调用 Buffer.reset() 方法将位置重置回标记位置，就像在标准 IO 中一样。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">buffer.mark();</span><br><span class="line"><span class="comment">// 调用 buffer.get() 等方法读取数据...</span></span><br><span class="line"></span><br><span class="line">buffer.reset();  <span class="comment">// 设置 position 回到 mark 位置。    </span></span><br></pre></td></tr></table></figure>
+
+<p><strong>使用buffer的一些好处</strong></p>
+<p>当我们使用buffer和channel共同进行数据传输的时候，channel解决了阻塞的问题，那么buffer解决了什么问题？下面我们看一下buffer和channel的流程图</p>
+<p><img src="/images/pasted-28.png" alt="upload successful"><br>乍一看内核空间和用户空间进行交互的时候，还需要现将数据放入到buffer然后在通过read取出来不是多此一举吗？其实不然，我们设想以下下面的情况，<br>ByteBuffer buffer = ByteBuffer.allocate(1024 * 4);<br>……<br>channel.read(buffer);<br>……<br>while(true){<br>byte[] buf = new byte[32];<br>buffer.read(buf);<br>//handle<br>}<br>如果有1024<em>4 个byte需要读取，若我们使用字节流读取的话就需要进行1024</em>4/32次IO操作，若我们提前讲数据放入buffer，我们就只需要一次IO操作，其他的操作都是在内存中进行，效率就会高很多。</p>
+<h5 id="3-selector"><a href="#3-selector" class="headerlink" title="3.selector"></a>3.selector</h5><p>Selector是NIO中的一个组件，它负责监控和管理多个Channel从而管理多个网络连接。并可以使用轮询的方式确定那些通道可以读写。通道必须处于非阻塞的模式才能够和选择器一起使用，这意味着无法将FileChannel与Selector一起使用，因为FileChannel无法切换到非阻塞模式。套接字通道则支持。</p>
+<p>通常selector通过register()的方法来管理通道，他可以监听四种不同的事件，</p>
+<ul>
+<li>Connect 连接</li>
+<li>Accept 接收</li>
+<li>Read 读</li>
+<li>Write 写</li>
+</ul>
+<p>一个“发起事件”的通道也被称为“已就绪”事件。 因此，已成功连接到另一台服务器的通道是“连接就绪”。 接受传入连接的服务器套接字通道是“接收就绪”。 准备好要读取的数据的通道“读就绪”。 准备好写入数据的通道称为“写就绪”。</p>
+<p>下面结合一个具体的例子我们来操作NIO<br><strong>NIOServer</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> nio;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NioServer</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> PORT = <span class="number">12345</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> NIOServerHandle serverhandle;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span></span>&#123;</span><br><span class="line">        start(PORT);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">(<span class="keyword">int</span> port)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(serverhandle!=<span class="keyword">null</span>)</span><br><span class="line">            serverhandle.stop();</span><br><span class="line">        serverhandle = <span class="keyword">new</span> NIOServerHandle(port);</span><br><span class="line">        <span class="keyword">new</span> Thread(serverhandle,<span class="string">"Server"</span>).start();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">        start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><strong>NIOServerHandler</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> nio;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.net.InetSocketAddress;</span><br><span class="line"><span class="keyword">import</span> java.nio.ByteBuffer;</span><br><span class="line"><span class="keyword">import</span> java.nio.channels.SelectionKey;</span><br><span class="line"><span class="keyword">import</span> java.nio.channels.Selector;</span><br><span class="line"><span class="keyword">import</span> java.nio.channels.ServerSocketChannel;</span><br><span class="line"><span class="keyword">import</span> java.nio.channels.SocketChannel;</span><br><span class="line"><span class="keyword">import</span> java.util.Iterator;</span><br><span class="line"><span class="keyword">import</span> java.util.Set;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NIOServerHandle</span> <span class="keyword">implements</span> <span class="title">Runnable</span></span>&#123;</span><br><span class="line">    <span class="keyword">private</span> Selector selector;</span><br><span class="line">    <span class="keyword">private</span> ServerSocketChannel serverSocketChannel;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">boolean</span> started;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">NIOServerHandle</span><span class="params">(<span class="keyword">int</span> port)</span></span>&#123;</span><br><span class="line">        <span class="keyword">try</span>&#123;</span><br><span class="line">            selector = Selector.open();</span><br><span class="line">            serverSocketChannel = ServerSocketChannel.open();</span><br><span class="line">            serverSocketChannel.configureBlocking(<span class="keyword">false</span>);</span><br><span class="line">            serverSocketChannel.socket().bind(<span class="keyword">new</span> InetSocketAddress(port),<span class="number">1024</span>);</span><br><span class="line">            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);</span><br><span class="line">            started = <span class="keyword">true</span>;</span><br><span class="line">            System.out.println(<span class="string">"服务器已启动， 端口号"</span>+ port);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">            System.exit(<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">stop</span><span class="params">()</span></span>&#123;started = <span class="keyword">false</span>;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (started)&#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                selector.select(<span class="number">1000</span>);</span><br><span class="line">                Set&lt;SelectionKey&gt; keys = selector.selectedKeys();</span><br><span class="line">                Iterator&lt;SelectionKey&gt; it = keys.iterator();</span><br><span class="line">                SelectionKey key = <span class="keyword">null</span>;</span><br><span class="line">                <span class="keyword">while</span> (it.hasNext())&#123;</span><br><span class="line">                    key = it.next();</span><br><span class="line">                    it.remove();</span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        hanleInput(key);</span><br><span class="line">                    &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">                        <span class="keyword">if</span>(key != <span class="keyword">null</span>)&#123;</span><br><span class="line">                            key.cancel();</span><br><span class="line">                            <span class="keyword">if</span>(key.channel() != <span class="keyword">null</span>)&#123;</span><br><span class="line">                                key.channel().close();</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">            &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(selector != <span class="keyword">null</span>)&#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                selector.close();</span><br><span class="line">            &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">hanleInput</span><span class="params">(SelectionKey key)</span> <span class="keyword">throws</span> IOException</span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(key.isValid())&#123;</span><br><span class="line">            <span class="keyword">if</span>(key.isAcceptable())&#123;</span><br><span class="line">                ServerSocketChannel ssc = (ServerSocketChannel)key.channel();</span><br><span class="line">                SocketChannel sc = ssc.accept();</span><br><span class="line">                sc.configureBlocking(<span class="keyword">false</span>);</span><br><span class="line">                sc.register(selector,SelectionKey.OP_READ);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(key.isReadable())&#123;</span><br><span class="line">                SocketChannel sc = (SocketChannel)key.channel();</span><br><span class="line">                ByteBuffer buffer = ByteBuffer.allocate(<span class="number">1024</span>);</span><br><span class="line">                <span class="keyword">int</span> readBytes = sc.read(buffer);</span><br><span class="line">                <span class="keyword">if</span>(readBytes &gt;<span class="number">0</span>)&#123;</span><br><span class="line">                    buffer.flip();</span><br><span class="line">                    <span class="keyword">byte</span>[] bytes = <span class="keyword">new</span> <span class="keyword">byte</span>[buffer.remaining()];</span><br><span class="line">                    buffer.get(bytes);</span><br><span class="line">                    String expression = <span class="keyword">new</span> String(bytes,<span class="string">"UTF-8"</span>);</span><br><span class="line">                    System.out.println(<span class="string">"服务器收到消息："</span> + expression);</span><br><span class="line">                    String result = <span class="string">"to do"</span>;</span><br><span class="line">                    doWrite(sc, result);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">else</span>  <span class="keyword">if</span>(readBytes&lt;<span class="number">0</span>)&#123;</span><br><span class="line">                    key.cancel();</span><br><span class="line">                    sc.close();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">doWrite</span><span class="params">(SocketChannel channel, String response)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        <span class="keyword">byte</span>[] bytes = response.getBytes();</span><br><span class="line">        ByteBuffer writeBuffer = ByteBuffer.allocate(bytes.length);</span><br><span class="line">        writeBuffer.put(bytes);</span><br><span class="line">        writeBuffer.flip();</span><br><span class="line">        channel.write(writeBuffer);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><strong>NIOClient</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> nio;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NIOClient</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> String HOST = <span class="string">"localhost"</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> PORT = <span class="number">12345</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> NIOClientHandle clientHandle;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span></span>&#123;</span><br><span class="line">        start(HOST,PORT);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">(String host, <span class="keyword">int</span> port)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(clientHandle != <span class="keyword">null</span>)</span><br><span class="line">            clientHandle.stop();</span><br><span class="line">        clientHandle = <span class="keyword">new</span> NIOClientHandle(host,port);</span><br><span class="line">        <span class="keyword">new</span> Thread(clientHandle,<span class="string">"Server"</span>).start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//向服务器发送消息</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">sendMsg</span><span class="params">(String msg)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(msg.equals(<span class="string">"q"</span>)) <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        clientHandle.sendMsg(msg);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">        start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><strong>NIOClientHandle</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> nio;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.net.InetSocketAddress;</span><br><span class="line"><span class="keyword">import</span> java.nio.ByteBuffer;</span><br><span class="line"><span class="keyword">import</span> java.nio.channels.ClosedChannelException;</span><br><span class="line"><span class="keyword">import</span> java.nio.channels.SelectionKey;</span><br><span class="line"><span class="keyword">import</span> java.nio.channels.Selector;</span><br><span class="line"><span class="keyword">import</span> java.nio.channels.SocketChannel;</span><br><span class="line"><span class="keyword">import</span> java.util.Iterator;</span><br><span class="line"><span class="keyword">import</span> java.util.Set;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NIOClientHandle</span> <span class="keyword">implements</span> <span class="title">Runnable</span></span>&#123;</span><br><span class="line">    <span class="keyword">private</span> String host;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> port;</span><br><span class="line">    <span class="keyword">private</span> Selector selector;</span><br><span class="line">    <span class="keyword">private</span> SocketChannel socketChannel;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">boolean</span> started;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">NIOClientHandle</span><span class="params">(String host, <span class="keyword">int</span> port)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.host = host;</span><br><span class="line">        <span class="keyword">this</span>.port = port;</span><br><span class="line">        <span class="keyword">try</span>&#123;</span><br><span class="line">            <span class="comment">//创建选择器</span></span><br><span class="line">            selector = Selector.open();</span><br><span class="line">            <span class="comment">//打开监听通道</span></span><br><span class="line">            socketChannel = SocketChannel.open();</span><br><span class="line">            <span class="comment">//如果为 true，则此通道将被置于阻塞模式；如果为 false，则此通道将被置于非阻塞模式</span></span><br><span class="line">            socketChannel.configureBlocking(<span class="keyword">false</span>);<span class="comment">//开启非阻塞模式</span></span><br><span class="line">            started = <span class="keyword">true</span>;</span><br><span class="line">        &#125;<span class="keyword">catch</span>(IOException e)&#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">            System.exit(<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">stop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        started = <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            doConnect();</span><br><span class="line">        &#125;<span class="keyword">catch</span> (IOException e)&#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">            System.exit(<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">while</span> (started)&#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                selector.select(<span class="number">1000</span>);</span><br><span class="line">                Set&lt;SelectionKey&gt; keys = selector.selectedKeys();</span><br><span class="line">                Iterator&lt;SelectionKey&gt; it = keys.iterator();</span><br><span class="line">                SelectionKey key = <span class="keyword">null</span>;</span><br><span class="line">                <span class="keyword">while</span>(it.hasNext())&#123;</span><br><span class="line">                    key = it.next();</span><br><span class="line">                    it.remove();</span><br><span class="line">                    <span class="keyword">try</span>&#123;</span><br><span class="line">                        handleInput(key);</span><br><span class="line">                    &#125;<span class="keyword">catch</span>(Exception e)&#123;</span><br><span class="line">                        <span class="keyword">if</span>(key != <span class="keyword">null</span>)&#123;</span><br><span class="line">                            key.cancel();</span><br><span class="line">                            <span class="keyword">if</span>(key.channel() != <span class="keyword">null</span>)&#123;</span><br><span class="line">                                key.channel().close();</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">                System.exit(<span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(selector != <span class="keyword">null</span>)</span><br><span class="line">            <span class="keyword">try</span>&#123;</span><br><span class="line">                selector.close();</span><br><span class="line">            &#125;<span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">doConnect</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(socketChannel.connect(<span class="keyword">new</span> InetSocketAddress(host,port)));</span><br><span class="line">        <span class="keyword">else</span> socketChannel.register(selector, SelectionKey.OP_CONNECT);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">sendMsg</span><span class="params">(String msg)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        socketChannel.register(selector, SelectionKey.OP_READ);</span><br><span class="line">        doWrite(socketChannel, msg);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">doWrite</span><span class="params">(SocketChannel channel,String request)</span> <span class="keyword">throws</span> IOException</span>&#123;</span><br><span class="line">        <span class="comment">//将消息编码为字节数组</span></span><br><span class="line">        <span class="keyword">byte</span>[] bytes = request.getBytes();</span><br><span class="line">        <span class="comment">//根据数组容量创建ByteBuffer</span></span><br><span class="line">        ByteBuffer writeBuffer = ByteBuffer.allocate(bytes.length);</span><br><span class="line">        <span class="comment">//将字节数组复制到缓冲区</span></span><br><span class="line">        writeBuffer.put(bytes);</span><br><span class="line">        <span class="comment">//flip操作</span></span><br><span class="line">        writeBuffer.flip();</span><br><span class="line">        <span class="comment">//发送缓冲区的字节数组</span></span><br><span class="line">        channel.write(writeBuffer);</span><br><span class="line">        <span class="comment">//****此处不含处理“写半包”的代码</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">handleInput</span><span class="params">(SelectionKey key)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(key.isValid())&#123;</span><br><span class="line">            SocketChannel sc = (SocketChannel) key.channel();</span><br><span class="line">            <span class="keyword">if</span>(key.isConnectable())&#123;</span><br><span class="line">                <span class="keyword">if</span>(sc.finishConnect());</span><br><span class="line">                <span class="keyword">else</span> System.exit(<span class="number">1</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//读消息</span></span><br><span class="line">            <span class="keyword">if</span>(key.isReadable())&#123;</span><br><span class="line">                <span class="comment">//创建ByteBuffer，并开辟一个1M的缓冲区</span></span><br><span class="line">                ByteBuffer buffer = ByteBuffer.allocate(<span class="number">1024</span>);</span><br><span class="line">                <span class="comment">//读取请求码流，返回读取到的字节数</span></span><br><span class="line">                <span class="keyword">int</span> readBytes = sc.read(buffer);</span><br><span class="line">                <span class="comment">//读取到字节，对字节进行编解码</span></span><br><span class="line">                <span class="keyword">if</span>(readBytes&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="comment">//将缓冲区当前的limit设置为position=0，用于后续对缓冲区的读取操作</span></span><br><span class="line">                    buffer.flip();</span><br><span class="line">                    <span class="comment">//根据缓冲区可读字节数创建字节数组</span></span><br><span class="line">                    <span class="keyword">byte</span>[] bytes = <span class="keyword">new</span> <span class="keyword">byte</span>[buffer.remaining()];</span><br><span class="line">                    <span class="comment">//将缓冲区可读字节数组复制到新建的数组中</span></span><br><span class="line">                    buffer.get(bytes);</span><br><span class="line">                    String result = <span class="keyword">new</span> String(bytes,<span class="string">"UTF-8"</span>);</span><br><span class="line">                    System.out.println(<span class="string">"客户端收到消息："</span> + result);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">//没有读取到字节 忽略</span></span><br><span class="line"><span class="comment">//				else if(readBytes==0);</span></span><br><span class="line">                <span class="comment">//链路已经关闭，释放资源</span></span><br><span class="line">                <span class="keyword">else</span> <span class="keyword">if</span>(readBytes&lt;<span class="number">0</span>)&#123;</span><br><span class="line">                    key.cancel();</span><br><span class="line">                    sc.close();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><strong>Test</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> nio;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.Scanner;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line">        <span class="comment">//运行服务器</span></span><br><span class="line">        NioServer.start();</span><br><span class="line">        <span class="comment">//避免客户端先于服务器启动前执行代码</span></span><br><span class="line">        Thread.sleep(<span class="number">100</span>);</span><br><span class="line">        <span class="comment">//运行客户端</span></span><br><span class="line"></span><br><span class="line">        NIOClient.start();</span><br><span class="line">        <span class="keyword">while</span>(NIOClient.sendMsg(<span class="keyword">new</span> Scanner(System.in).nextLine()));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h4 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h4><p><a href="https://www.zhihu.com/question/19732473" target="_blank" rel="noopener">怎样理解阻塞非阻塞与同步异步的区别？</a><br><a href="https://blog.csdn.net/anxpp/article/details/51512200" target="_blank" rel="noopener">Java 网络IO编程总结（BIO、NIO、AIO均含完整实例代码）</a><br><a href="https://www.jianshu.com/p/49754f69822c" target="_blank" rel="noopener">BIO/NIO底层原理分析</a><br><a href="https://www.bilibili.com/video/BV11K4y1C7rm?p=2" target="_blank" rel="noopener">清华大牛权威讲解nio,epoll,多路复用，更好的理解redis-netty-Kafka等热门技术</a><br><a href="https://tech.meituan.com/2016/11/04/nio.html" target="_blank" rel="noopener">Java NIO浅析</a><br><a href="https://www.cnblogs.com/lxyit/p/9209407.html" target="_blank" rel="noopener">SocketChannel简述</a><br><a href="https://www.cnblogs.com/czwbig/p/10035631.html" target="_blank" rel="noopener">Java NIO 学习笔记（一）—-概述，Channel/Buffer</a></p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Jiajun Ma
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://qq19971017.github.io/2020/06/02/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-2-%E2%80%94%E2%80%94%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8BBIO%E3%80%81NIO%E3%80%81AIO/" title="计算机网络(2)——网络编程BIO、NIO">https://qq19971017.github.io/2020/06/02/计算机网络-2-——网络编程BIO、NIO、AIO/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag"># 计算机网络</a>
+              <a href="/tags/socket/" rel="tag"># socket</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/05/27/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-1-%E2%80%94%E2%80%94socket%E7%BC%96%E7%A8%8B/" rel="prev" title="计算机网络(1)——socket编程">
+      <i class="fa fa-chevron-left"></i> 计算机网络(1)——socket编程
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#计算机网络-2-——网络编程BIO、NIO"><span class="nav-number">1.</span> <span class="nav-text">计算机网络(2)——网络编程BIO、NIO</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#一-同步、异步、阻塞、非阻塞"><span class="nav-number">1.1.</span> <span class="nav-text">一. 同步、异步、阻塞、非阻塞</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#二-BIO模型"><span class="nav-number">1.2.</span> <span class="nav-text">二. BIO模型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#三-NIO模型"><span class="nav-number">1.3.</span> <span class="nav-text">三. NIO模型</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#1-channel"><span class="nav-number">1.3.1.</span> <span class="nav-text">1.channel</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-buffer"><span class="nav-number">1.3.2.</span> <span class="nav-text">2.buffer</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-selector"><span class="nav-number">1.3.3.</span> <span class="nav-text">3.selector</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#参考文献"><span class="nav-number">1.4.</span> <span class="nav-text">参考文献</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Jiajun Ma</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/qq19971017" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;qq19971017" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:mjjshu@163.com" title="E-Mail → mailto:mjjshu@163.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://qinhan.site/" title="https:&#x2F;&#x2F;qinhan.site&#x2F;" rel="noopener" target="_blank">QinHan(Game Developer & Designer)</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jiajun Ma</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
