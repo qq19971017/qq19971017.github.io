@@ -899,7 +899,7 @@
 <p><a href="https://juejin.im/post/5a810b0e5188257a5c606a85" target="_blank" rel="noopener">Java类加载机制（全套）</a><br><a href="https://www.cnblogs.com/aspirant/p/7200523.html" target="_blank" rel="noopener">Java 类加载机制(阿里)-何时初始化类</a><br><a href="https://blog.csdn.net/ns_code/article/details/17881581" target="_blank" rel="noopener">【深入Java虚拟机】之四：类加载机制</a><br><a href="https://blog.csdn.net/ns_code/article/details/17845821" target="_blank" rel="noopener">【深入Java虚拟机】之三：类初始化</a><br><a href="https://blog.csdn.net/zhangliangzi/article/details/51338291" target="_blank" rel="noopener">JVM类加载机制详解（二）类加载器与双亲委派模型</a><br><a href="https://blog.csdn.net/javazejian/article/details/73413292" target="_blank" rel="noopener"> 深入理解Java类加载器(ClassLoader)</a></p>
 ]]></content>
       <categories>
-        <category>JVM 学习</category>
+        <category>JVM</category>
       </categories>
       <tags>
         <tag>JVM</tag>
@@ -956,7 +956,7 @@
 <p><a href="https://www.cnblogs.com/ityouknow/p/5610232.html" target="_blank" rel="noopener">jvm系列(二):JVM内存结构</a></p>
 ]]></content>
       <categories>
-        <category>JVM 学习</category>
+        <category>JVM</category>
       </categories>
       <tags>
         <tag>JVM</tag>
