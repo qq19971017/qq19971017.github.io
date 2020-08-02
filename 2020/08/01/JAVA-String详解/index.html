@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"qq19971017.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="一. String概念String 是java中对字符串的一种表达方式，这是一个示例对象，并不属于常见的8中基本类型，和char[]也有一定的区别。 1.String特性String有三个特性。  不可变性：从JDK文档中我们可以看到，String是常量的，这就意味着当我们对String重新赋值的时候，需要重写指定内存区域进行赋值，不能对原有的内存地址中的value进行修改。当对现有的字符串进行拼">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JAVA String详解">
+<meta property="og:url" content="https://qq19971017.github.io/2020/08/01/JAVA-String%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="学无止境">
+<meta property="og:description" content="一. String概念String 是java中对字符串的一种表达方式，这是一个示例对象，并不属于常见的8中基本类型，和char[]也有一定的区别。 1.String特性String有三个特性。  不可变性：从JDK文档中我们可以看到，String是常量的，这就意味着当我们对String重新赋值的时候，需要重写指定内存区域进行赋值，不能对原有的内存地址中的value进行修改。当对现有的字符串进行拼">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-53.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-54.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-55.png">
+<meta property="article:published_time" content="2020-08-01T06:06:00.000Z">
+<meta property="article:modified_time" content="2020-08-02T09:49:54.123Z">
+<meta property="article:author" content="Jiajun Ma">
+<meta property="article:tag" content="字符串">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://qq19971017.github.io/images/pasted-53.png">
+
+<link rel="canonical" href="https://qq19971017.github.io/2020/08/01/JAVA-String%E8%AF%A6%E8%A7%A3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>JAVA String详解 | 学无止境</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="学无止境" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">学无止境</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/08/01/JAVA-String%E8%AF%A6%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Jiajun Ma">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="学无止境">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          JAVA String详解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-01 14:06:00" itemprop="dateCreated datePublished" datetime="2020-08-01T14:06:00+08:00">2020-08-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-02 17:49:54" itemprop="dateModified" datetime="2020-08-02T17:49:54+08:00">2020-08-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%97%E7%AC%A6%E4%B8%B2/" itemprop="url" rel="index"><span itemprop="name">字符串</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="一-String概念"><a href="#一-String概念" class="headerlink" title="一. String概念"></a>一. String概念</h3><p>String 是java中对字符串的一种表达方式，这是一个示例对象，并不属于常见的8中基本类型，和char[]也有一定的区别。</p>
+<h4 id="1-String特性"><a href="#1-String特性" class="headerlink" title="1.String特性"></a>1.String特性</h4><p>String有三个特性。</p>
+<ul>
+<li><p>不可变性：从JDK文档中我们可以看到，String是常量的，这就意味着当我们对String重新赋值的时候，需要重写指定内存区域进行赋值，不能对原有的内存地址中的value进行修改。当对现有的字符串进行拼接的时候，也需要重新指定内存区域赋值，不能使用原有的value进行赋值。当我们调用String的replace()方法进行修改的时候，同样的也不能直接修改</p>
+</li>
+<li><p>final 修饰：这意味这String是不可以被继承的，这也增加了String的安全性。实现Serializable接口：表示字符串支持序列化，实现了ComparaBle接口：表示String可以比较大小；</p>
+</li>
+<li><p>在JVM中维护了一个字符串常量池，用于存放字符串常量，这个对于我们深入理解String是非常重要的，至于字符串常量池的版本变化，我在之前的方法区中有提到过，大家可以去看一下。通过字面量的方式(区别与new)给一个字符串赋值，此时的字符串值声明在字符串常量池中。当然根据字符串常量池的特性，常量池中是不会存放相同的值，当我们创建两个具有相同字面量的字符串时，比如</p>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">String a = <span class="string">"abc"</span>;</span><br><span class="line">String b = <span class="string">"abc"</span>;</span><br></pre></td></tr></table></figure>
+
+<p>因为字符串a和字符串b被同一个字面量创建，当a被创建的时候，会先检查字符串常量池中是否有“abc”，如果没有则开辟一个空间并把“abc”存放到这个地址上，而当b被创建的时候，检查常量池上已经有“abc”了，所以直接把指针指向该地址。实际上a和b指向的是同一个地址。</p>
+<h4 id="2-String内存分配"><a href="#2-String内存分配" class="headerlink" title="2.String内存分配"></a>2.String内存分配</h4><p>在Java语言中，有8种基本类型，和一种比较特殊的类型String，这些类型为了使他们在运行过程中速度更快，更节省内存，都提供了一种常量池的概念。<br>常量池就是类似一个Java系统级别的提供的缓存。8中基本类型的常量池都是系统协调的，String类型的常量池比较特殊。它主要使用的方法有两种：</p>
+<ul>
+<li>直接使用双引号声明出来的String对象会直接存储在常量池中。</li>
+<li>如果不是用双引号声明的String对象，可以使用String提供的intern()方法。</li>
+</ul>
+<h3 id="String操作"><a href="#String操作" class="headerlink" title="String操作"></a>String操作</h3><p>String操作有：字符串的创建、拼接、比较等几个比较常用的方法，这些方法的一些用法因为String的特殊性，经常被当作笔试的题目，我们接下来就重点讲解这几个操作。</p>
+<h4 id="1-String创建"><a href="#1-String创建" class="headerlink" title="1.String创建"></a>1.String创建</h4><p>String的创建有两种方法，一种是使用字面量赋值，比如</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">String a = <span class="string">"abc"</span>;</span><br><span class="line">String b = <span class="string">"abc"</span>;</span><br></pre></td></tr></table></figure>
+<p>这种方式创建字符串，会直接在常量池中创建对象，栈对象a和b分别用指针指向该字符串常量池中的常量。</p>
+<p>另一种方式是使用常用的new关键字创建，如下所示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String c = <span class="keyword">new</span> String(<span class="string">"abc"</span>);</span><br></pre></td></tr></table></figure>
+<p>这种方式创建的字符串会先在堆中开辟一个空间，并创建字符串对象c，这个对象的value为“abc”，同时会检查常量池是否含有“abc”字符串，如果没有的话会重新创建一个字符串常量“abc”。</p>
+<p>总结来说第一种创建方法指针会直接指向字符串常量池相当于a-&gt;”abc”,b-&gt;”abc”，第二种方式首先会在堆中创建一个c的String对象，它的value是“abc”。 同时如果这个字符串在常量池中不存在，会在常量池中创建这个String对象“abc”；</p>
+<p>我们用下图表示，两者的区别：</p>
+<p><img src="/images/pasted-53.png" alt="upload successful"></p>
+<p>所以我们可以看到这样的面试题：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">stringTest</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        String a = <span class="string">"abc"</span>;</span><br><span class="line">        String b = <span class="string">"abc"</span>;</span><br><span class="line">        String c = <span class="keyword">new</span> String(<span class="string">"abc"</span>);</span><br><span class="line">        System.out.println(a == b);</span><br><span class="line">        System.out.println(a == c);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>返回的结果是</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">true</span></span><br><span class="line"><span class="keyword">false</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="2-String拼接"><a href="#2-String拼接" class="headerlink" title="2.String拼接"></a>2.String拼接</h4><p>常量池的拼接遵守以下规则：</p>
+<ul>
+<li>1.常量和常量的拼接结果在常量池中，原理是编译期优化。</li>
+<li>2.常量池中不会存在相同内容的常量。</li>
+<li><ol start="3">
+<li>只要其中有一个是变量，结果就在堆中。变量拼接的原理是StringBuilder。</li>
+</ol>
+</li>
+<li>4.如果拼接的结果调用intern()方法，则主动将常量池中还没有的字符串对象放在常量池中，并返回此对象地址。</li>
+</ul>
+<p>下面我们根据一些笔试的题目看一下这些规则：<br>面试题一：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Test1</span><span class="params">()</span></span>&#123;</span><br><span class="line">    String a = <span class="string">"a"</span> + <span class="string">"b"</span> + <span class="string">"c"</span>;</span><br><span class="line">    String b = <span class="string">"abc"</span>;</span><br><span class="line">    System.out.println(a ==b);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里a是由三个字符串拼接的结果，我们根据规则一可以得到拼接结果“abc”会放在常量池中，所以结果阿返回的是true，并且我们根据编译的class文件可以看到，String a = “a” + “b” + “c”;直接会被优化成String a = “abc”;所以最后执行的代码是String a = “abc”；这样我们可以和我们之间的知识对应。</p>
+<p>面试题二：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Test2</span><span class="params">()</span></span>&#123;</span><br><span class="line">    String s1 = <span class="string">"a"</span>;</span><br><span class="line">    String s2 = <span class="string">"b"</span>;</span><br><span class="line">    String s3 = <span class="string">"ab"</span>;</span><br><span class="line">    String s4 = <span class="string">"a"</span>+<span class="string">"b"</span>;</span><br><span class="line">    String s5 = s1+<span class="string">"b"</span>;</span><br><span class="line">    String s6 = <span class="string">"a"</span>+s2;</span><br><span class="line">    String s7 = s1+s2;</span><br><span class="line"></span><br><span class="line">    System.out.println(s3 == s4); <span class="comment">//true</span></span><br><span class="line">    System.out.println(s3 == s5); <span class="comment">//false</span></span><br><span class="line">    System.out.println(s3 == s7); <span class="comment">//false</span></span><br><span class="line">    System.out.println(s5 == s6); <span class="comment">//false</span></span><br><span class="line">    System.out.println(s5 == s7); <span class="comment">//false</span></span><br><span class="line">    System.out.println(s6 == s7); <span class="comment">//false</span></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由上面的规则得到，只要其中有一个是变量，得到的结果就存放在堆中，而不是在常量池中，所以除了当一个返回的是true，其他的返回的都是false。</p>
+<p>当我们使用变量进行拼接的时候，我们使用的底层是StringBilder，比如上面的String s7 = s1+s2;就相当于</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">StringBuilder sb = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">sb.append(<span class="string">"a"</span>);</span><br><span class="line">sb.append(<span class="string">"b"</span>);</span><br><span class="line">sb.toString();</span><br></pre></td></tr></table></figure>
+<p>StringBuilder的toString操作实际上是一个new String的操作。</p>
+<p>当然不是所有的变量拼接操作都是使用StringBuilder操作的，当我们对变量声明为final的时候，变量的拼接就会编程常量的拼接，这样底层就不会用到SringBuilder，而是由编译器优化直接使用常量池进行赋值。</p>
+<p>这里同时也变相说明了String的拼接操作会比StringBuilder的拼接操作效率低，因为String在进行拼接操作的过程中会new StringBuilder对象，然后再进行拼接操作，而StringBuilder直接进行拼接，节省了空间和时间从而提高效率。</p>
+<p>讲完上面两个String的创建和拼接，我们来看一个综合的笔试面试题目。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Test3</span><span class="params">()</span></span>&#123;</span><br><span class="line">     String a = <span class="keyword">new</span> String(<span class="string">"a"</span>)+ <span class="keyword">new</span> String(<span class="string">"b"</span>);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>我们来计算一下这里到底创建了多少个对象，我们先说答案，再说为什么，这里一共生成了6个对象。<br>首先是会生成一个StringBuilder对象用于拼接，接着对于new String(a)会在堆中以及常量分别生成String对象，以及对于new String(“b”)同样的会生成两个对象，最后调用StringBuilder的toString方法，会生成一个String对象。这里要注意，toString方法并不会在常量池中生成对象，所以常量池中并没有“ab”的字符串对象。</p>
+<h4 id="3-intern"><a href="#3-intern" class="headerlink" title="3.intern()"></a>3.intern()</h4><p>String字符串还有一个比较特殊的API：intern()，当一个字符串s调用这个函数的时候，会从字符串常量池中寻找是否有与s值相等的字符串，如果找到了，就返回常量池中的字符串。否则，将该字符串加入到常量池中，并且返回对该常量池中这个字符串的引用。</p>
+<p>比如说：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String info = <span class="keyword">new</span> String(<span class="string">"1111"</span>).intern();</span><br></pre></td></tr></table></figure>
+
+<p>也就是说，如果在任意字符串上调用String.intern方法，那么返回结果所指向的那个类实例，必须和直接以常量形式出现的字符串实例完全相同，因此，下列表达式的值必定是true</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="string">"a"</span>+<span class="string">"b"</span>+<span class="string">"c"</span>&#125;.intern()== “abc”；</span><br></pre></td></tr></table></figure>
+<p>通俗来讲，Intern就是确保相同值的字符串在内存中只用一份拷贝，这样可以节约内存空间，加快字符串操作任务的执行速度。注意这个值会被存放在字符串内部池。</p>
+<p>这里我们仍然用一个面试题来看一下intern()方法使用：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Test4</span><span class="params">()</span></span>&#123;</span><br><span class="line">    String a = <span class="keyword">new</span> String(<span class="string">"a"</span>) + <span class="keyword">new</span> String(<span class="string">"b"</span>);</span><br><span class="line">    a.intern();</span><br><span class="line">    String b = <span class="string">"ab"</span>;</span><br><span class="line">    System.out.println(a == b);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这题的答案其实根据不同的jdk版本是不一样的，在jdk1.6以前，因为之前说过String a = new String(“a”) + new String(“b”);并没有在常量池中创建“ab”的字符串，且a指向的是堆空间地址，所以返回的是false，但是在jdk7及以后，intern同样会在常量池中寻找“ab”对象，但是因为在堆中已经创建了“ab”的字符串对象，所以当b创建对象的时候，常量池不需要在常量池中重新创建“ab”对象了，可以直接存储堆中的引用，这个引用指向s3引用的对象，也就是说引用地址相同。所以结果最终返回的是true。</p>
+<p>当我们将a.intern();和String b = “ab”;调换一下顺序之后，结果又会发生变化，如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Test4</span><span class="params">()</span></span>&#123;</span><br><span class="line">    String a = <span class="keyword">new</span> String(<span class="string">"a"</span>) + <span class="keyword">new</span> String(<span class="string">"b"</span>);</span><br><span class="line">    String b = <span class="string">"ab"</span>;</span><br><span class="line">    a.intern();</span><br><span class="line">    System.out.println(a == b);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>因为String b = “ab”;并不会像a.intern()一样智能会选择直接引用堆中相同的对象，所以结果返回的就是false；</p>
+<h4 id="4-String-比较"><a href="#4-String-比较" class="headerlink" title="4.String 比较"></a>4.String 比较</h4><p>String的比较主要有两种，一种是==一种是equals。</p>
+<ul>
+<li>使用==号：用于比较对象引用的内存地址是否相同。</li>
+<li>使用equals方法：在Object类中和==号相同，但在自定义类中，建议覆盖equals方法去实现比较自己内容的细节；由于String类覆盖已经覆盖了equals方法，所以其比较的是字符内容。</li>
+</ul>
+<h3 id="三-StringBuffer-和-StringBuilder"><a href="#三-StringBuffer-和-StringBuilder" class="headerlink" title="三. StringBuffer 和 StringBuilder"></a>三. StringBuffer 和 StringBuilder</h3><p>StringBuffer和StringBuilder常常用于解决字符串拼接的问题，他们都比String直接凭借效率高很多。</p>
+<p>先来分别使用String/StringBuilder/StringBuffer来拼接30000次字符串，对比各自损耗的时间，经过测试发现：</p>
+<p>String做字符串拼接的时候，耗时最高，性能极低，原因是String内容是不可变的，每次内容改变都会在内存中创建新的对象。</p>
+<p>性能最好的是StringBuilder，其次是StringBuffer，最后是String。StringBuilder和StringBuffer区别并不是很大，也有可能是测试次数还不够吧。感兴趣的小伙伴可以增加拼接次数来看看。代码很简单，就不展示出来了。</p>
+<p>所以在开发中拼接字符串时，优先使用StringBuffer/StringBuilder，不到万不得已，不要轻易使用String。</p>
+<h4 id="StringBuilder以及StringBuffer的区别"><a href="#StringBuilder以及StringBuffer的区别" class="headerlink" title="StringBuilder以及StringBuffer的区别"></a>StringBuilder以及StringBuffer的区别</h4><p>StringBuffer和StringBuilder都表示可变的字符串，两种’的功能方法都是相同的。但唯一的区别：</p>
+<ul>
+<li>StringBuffer：StringBuffer中的方法都使用了synchronized修饰符，表示同步操作，在多线程并发的时候可以保证线程安全，但在保证线程安全的时候，对其性能有一定影响，会降低其性能。</li>
+<li>StringBuilder：StringBuilder中的方法都没有使用了synchronized修饰符，线程不安全，正因为如此，其性能较高。</li>
+</ul>
+<p>对并发安全没有很高要求的情况下，建议使用StringBuilder，因为其性能很高。像这样的情况会较多些。使用StringBuilder无参数的构造器，在底层创建了一个长度为16的char数组：</p>
+<p><img src="/images/pasted-54.png" alt="upload successful"></p>
+<p>此时该数组只能存储16个字符，如果超过了16个字符，会自动扩容（创建长度更大的数组,再把之前的数组拷贝到新数组），此时性能极低；如果事先知道大概需要存储多少字符，可以通过构造器来设置字符的初始值：</p>
+<p><img src="/images/pasted-55.png" alt="upload successful"></p>
+<h3 id="四-参考资料"><a href="#四-参考资料" class="headerlink" title="四. 参考资料"></a>四. 参考资料</h3><p><a href="https://www.bilibili.com/video/BV1PJ411n7xZ?t=428&p=131" target="_blank" rel="noopener">尚硅谷2020最新版宋红康JVM教程持续更新中(java虚拟机详解，jvm从入门到精通)
+</a></p>
+<p><a href="https://segmentfault.com/a/1190000022468585" target="_blank" rel="noopener">「JAVA」细述合理创建字符串，分析字符串的底层存储，你不该错过</a></p>
+<p><a href="https://blog.csdn.net/weixin_40304387/article/details/81071816" target="_blank" rel="noopener">字符串常量池深入解析
+</a></p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Jiajun Ma
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://qq19971017.github.io/2020/08/01/JAVA-String%E8%AF%A6%E8%A7%A3/" title="JAVA String详解">https://qq19971017.github.io/2020/08/01/JAVA-String详解/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%AD%97%E7%AC%A6%E4%B8%B2/" rel="tag"># 字符串</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/16/%E8%BD%AC-JAVA-%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E8%AF%A6%E8%A7%A3%EF%BC%88%E5%8E%9F%E5%9B%A0%E3%80%81%E4%BE%8B%E5%AD%90%E5%8F%8A%E8%A7%A3%E5%86%B3%EF%BC%89/" rel="prev" title="(转)JAVA 内存泄露详解（原因、例子及解决）">
+      <i class="fa fa-chevron-left"></i> (转)JAVA 内存泄露详解（原因、例子及解决）
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#一-String概念"><span class="nav-number">1.</span> <span class="nav-text">一. String概念</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-String特性"><span class="nav-number">1.1.</span> <span class="nav-text">1.String特性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-String内存分配"><span class="nav-number">1.2.</span> <span class="nav-text">2.String内存分配</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#String操作"><span class="nav-number">2.</span> <span class="nav-text">String操作</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-String创建"><span class="nav-number">2.1.</span> <span class="nav-text">1.String创建</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-String拼接"><span class="nav-number">2.2.</span> <span class="nav-text">2.String拼接</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-intern"><span class="nav-number">2.3.</span> <span class="nav-text">3.intern()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-String-比较"><span class="nav-number">2.4.</span> <span class="nav-text">4.String 比较</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三-StringBuffer-和-StringBuilder"><span class="nav-number">3.</span> <span class="nav-text">三. StringBuffer 和 StringBuilder</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#StringBuilder以及StringBuffer的区别"><span class="nav-number">3.1.</span> <span class="nav-text">StringBuilder以及StringBuffer的区别</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#四-参考资料"><span class="nav-number">4.</span> <span class="nav-text">四. 参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Jiajun Ma</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/qq19971017" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;qq19971017" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:mjjshu@163.com" title="E-Mail → mailto:mjjshu@163.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://qinhan.site/" title="https:&#x2F;&#x2F;qinhan.site&#x2F;" rel="noopener" target="_blank">QinHan(Game Developer & Designer)</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jiajun Ma</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
