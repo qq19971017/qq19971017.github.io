@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://qq19971017.github.io/"/>
-  <updated>2020-08-02T09:49:54.123Z</updated>
+  <updated>2020-08-04T05:02:33.703Z</updated>
   <id>https://qq19971017.github.io/</id>
   
   <author>
@@ -15,6 +15,33 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>leetcode——两数相加</title>
+    <link href="https://qq19971017.github.io/2020/08/04/leetcode%E2%80%94%E2%80%94%E4%B8%A4%E6%95%B0%E7%9B%B8%E5%8A%A0/"/>
+    <id>https://qq19971017.github.io/2020/08/04/leetcode%E2%80%94%E2%80%94%E4%B8%A4%E6%95%B0%E7%9B%B8%E5%8A%A0/</id>
+    <published>2020-08-04T04:52:00.000Z</published>
+    <updated>2020-08-04T05:02:33.703Z</updated>
+    
+    <content type="html"><![CDATA[<h4 id="题目描述"><a href="#题目描述" class="headerlink" title="题目描述"></a>题目描述</h4><p>请设计一个算法完成两个超长正整数的加法。</p><h4 id="接口说明"><a href="#接口说明" class="headerlink" title="接口说明"></a>接口说明</h4><p>/*<br>请设计一个算法完成两个超长正整数的加法。<br>输入参数：<br>String addend：加数<br>String augend：被加数<br>返回值：加法结果<br>*/</p><p>public String AddLongInteger(String addend, String augend)<br>{<br>/<em>在这里实现功能</em>/</p><p>return null;<br>}</p><p>本题有多组输入数据，请使用while(cin&gt;&gt;)等方式读取</p><h4 id="输入描述"><a href="#输入描述" class="headerlink" title="输入描述:"></a>输入描述:</h4><ul><li>输入两个字符串数字</li></ul><h4 id="输出描述："><a href="#输出描述：" class="headerlink" title="输出描述："></a>输出描述：</h4><ul><li>输出相加后的结果，string型</li></ul><h4 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h4><p>输入</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">99999999999999999999999999999999999999999999999999</span></span><br><span class="line"><span class="number">1</span></span><br></pre></td></tr></table></figure><p>输出</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">100000000000000000000000000000000000000000000000000</span></span><br></pre></td></tr></table></figure><h4 id="讲解"><a href="#讲解" class="headerlink" title="讲解"></a>讲解</h4><p>这个题目第一次做的时候是在去年做网易的笔试题目的时候，当时用的语言还是c++，但是无从下手，不知道该怎么解决这个问题，昨天刷leetcode每日一题的时候，又重新看到了这个题目，所以很系统的了解一下应该如何去处理这样的题目，因为leetcode只需要写算法，不需要整个写输入输出，所以特地去牛客网上找到相同的题目又重新写了一遍。</p><p>算法其实不难，但是我们整体用到的知识点就是如何从尾部相加，我们用两个指针i，j分别指向加数和被加数的尾部，然后一个个相加，并用StringBuilder存储结果，最后将StringBuilder逆序并且转化为String类型。下面提供一个我自己写的代码：</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.*;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Main</span></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String [] args)</span></span>&#123;</span><br><span class="line">        Scanner sc = <span class="keyword">new</span> Scanner(System.in);</span><br><span class="line">        <span class="keyword">while</span>(sc.hasNext())&#123;</span><br><span class="line">            String  add1 = sc.nextLine();</span><br><span class="line">            String add2 = sc.nextLine();</span><br><span class="line">            String res = AddLongInteger(add1, add2);</span><br><span class="line">            System.out.println(res);</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> String <span class="title">AddLongInteger</span><span class="params">(String add1, String add2)</span></span>&#123;</span><br><span class="line">        <span class="keyword">int</span> m = add1.length();</span><br><span class="line">        <span class="keyword">int</span> n = add2.length();</span><br><span class="line">        <span class="keyword">int</span> c = <span class="number">0</span>;</span><br><span class="line">        StringBuilder sb = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">        <span class="keyword">int</span> i=m-<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">int</span> j = n-<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span>(i&gt;=<span class="number">0</span> || j&gt;=<span class="number">0</span> || c ==<span class="number">1</span>)&#123;</span><br><span class="line">            <span class="keyword">int</span> a1 = i&gt;=<span class="number">0</span>?add1.charAt(i)-<span class="string">'0'</span>:<span class="number">0</span>;</span><br><span class="line">            <span class="keyword">int</span> a2 = j&gt;=<span class="number">0</span>?add2.charAt(j)-<span class="string">'0'</span>:<span class="number">0</span>;</span><br><span class="line">            <span class="keyword">int</span> sum = a1+ a2+ c;</span><br><span class="line">            sb.append(sum %<span class="number">10</span>);</span><br><span class="line">            c = sum/<span class="number">10</span>;</span><br><span class="line">            i--;</span><br><span class="line">            j--;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> sb.reverse().toString();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h4 id=&quot;题目描述&quot;&gt;&lt;a href=&quot;#题目描述&quot; class=&quot;headerlink&quot; title=&quot;题目描述&quot;&gt;&lt;/a&gt;题目描述&lt;/h4&gt;&lt;p&gt;请设计一个算法完成两个超长正整数的加法。&lt;/p&gt;
+&lt;h4 id=&quot;接口说明&quot;&gt;&lt;a href=&quot;#接口说明&quot; class=&quot;
+      
+    
+    </summary>
+    
+    
+      <category term="leetcode" scheme="https://qq19971017.github.io/categories/leetcode/"/>
+    
+    
+      <category term="leetcode" scheme="https://qq19971017.github.io/tags/leetcode/"/>
+    
+  </entry>
   
   <entry>
     <title>JAVA String详解</title>
