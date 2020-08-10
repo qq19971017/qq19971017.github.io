@@ -181,6 +181,123 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/05/27/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-1-%E2%80%94%E2%80%94socket%E7%BC%96%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Jiajun Ma">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="学无止境">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/05/27/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-1-%E2%80%94%E2%80%94socket%E7%BC%96%E7%A8%8B/" class="post-title-link" itemprop="url">计算机网络(1)——socket编程</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-05-27 16:49:00" itemprop="dateCreated datePublished" datetime="2020-05-27T16:49:00+08:00">2020-05-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-05-31 23:57:39" itemprop="dateModified" datetime="2020-05-31T23:57:39+08:00">2020-05-31</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="socket编程"><a href="#socket编程" class="headerlink" title="socket编程"></a>socket编程</h3><p>最近做项目，需要了解一些socket编程的相关知识，因为本身在大学的时候也接触过socket编程，但是时间已经很久了，并且当时学的不够用心，今天下午看了一些博客，对socket有了一些新的认识，在这里记录一下我学到的一些知识。</p>
+<h4 id="一-什么是socket"><a href="#一-什么是socket" class="headerlink" title="一.什么是socket"></a>一.什么是socket</h4><p>什么socket，这里我们要先从osi模型和TCP/IP模型开始讲起，OSI一共包含了7层，其中应用层、表示层和会话层是面向用户的，程序员可以在此基础上进行开发，如http、ftp、SMTP(邮件)等协议就是基于应用层建立的，下面的四层协议是由系统内核封装，对用户不可见的。<br><img src="/images/pasted-19.png" alt="upload successful"></p>
+<p>OSI模型表达的过于复杂，为了简化模型，人们又提出了TCP/IP模型，这种模型将上面的3层模型统一的表示成应用层。<br><img src="/images/pasted-20.png" alt="upload successful"></p>
+<p>为了使数据分组从源传送到目的地，源端OSI模型的每一层都必须与目的端的对等层进行通信，这种通信方式称为对等层通信。在每一层通信过程中，使用本层自己协议进行通信。在进行网络通信的时候如打开一个网页，数据在发送端(这里指客户端)会从上到下进行封装，然后传输到服务端后，数据会自下而上进行解封装。最后获取上层数据。</p>
+<p>我们在进行网络通信的过程中，可以使用http这样应用层的协议，但是当没有协议满足我们的需求的时候，我们需要自主与TCP/UDP进行交互，这时候就有了socket，这是建立在传输层上的一个抽象层，帮助我们与tcp/ip建立连接进行通信，我们可以把它看作两个主机进行双向通信的端点。socket主要有3个参数：通信的目的IP地址、使用的传输层协议(TCP或UDP)和使用的端口号。</p>
+<h4 id="二-socket工作流程"><a href="#二-socket工作流程" class="headerlink" title="二. socket工作流程"></a>二. socket工作流程</h4><p><img src="/images/pasted-21.png" alt="upload successful"><br>socket是一种打开——读/写——关闭的模式的实现，使用TCP协议进行通讯为例。一共分为服务端socket和客户端socket。服务端socket负责监听客户端连接请求，当客户端发送请求时，两端进行通信。具体流程如下：</p>
+<ul>
+<li>1.服务端根据地址类型、socket类型、协议创建socket。</li>
+<li>2.服务端为socket绑定ip地址和端口号。</li>
+<li>3.服务器socket监听端口号请求，随时准备接受客户端发来的请求，这时候服务器的socket并没有被打开。</li>
+<li>4.客户端创建socket</li>
+<li>5.客户端打开socket，根据服务器的ip地址和端口号试图连接服务器socket</li>
+<li>6.服务器socket接收到客户端socket请求，被动打开，开始接收客户端请求，直到客户端返回连接信息。这时候socket进入阻塞状态，所谓阻塞即accept()方法一直到客户端返回连接信息后才返回，开始接收下一个客户端谅解请求。</li>
+<li>7.客户端连接成功，向服务端发送连接状态信息。</li>
+<li>8.服务器accept方法返回，连接成功</li>
+<li>9.客户端向socket写入信息</li>
+<li>10.服务器读取信息</li>
+<li>11.客户端关闭</li>
+<li>12.服务器关闭</li>
+</ul>
+<h5 id="1-三次握手"><a href="#1-三次握手" class="headerlink" title="1.三次握手"></a>1.三次握手</h5><p>在客户端和服务端建立TCP连接的过程中会发生有名的<strong>三次握手</strong></p>
+<p><img src="/images/pasted-23.png" alt="upload successful"></p>
+<p>第一次握手：客户端会尝试连接服务器，向服务器发送syn包，syn=j，客户端进入syn_send状态等待服务器确认。</p>
+<p>第二次握手：服务器接收客户端syn包并确认(ack=j+1),同时向客户端发送一个SYN包（syn=k），即SYN+ACK包，此时服务器进入SYN_RECV状态。</p>
+<p>第三次握手：客户端收到服务器的SYN+ACK包，向服务器发送确认包ACK(ack=k+1),此包发送完毕，客户端和服务器进入ESTABLISHED(已确认)，完成三次握手。</p>
+<p>值得强调的是<strong>accept()</strong>这个方法，内核会创建两个队列，SYN队列和accept队列，其中accept队列的长度由backlog指定。服务器在调用accept之后，阻塞，等待accept队列有元素，当三次握手结束后服务器会把客户端从syn队列转移到accept队列，而accept()被唤醒，从accept队列中取出请求方，重新建立一个socket用于准备发送和接收数据，原来的socket还在监听哪个端口。换一句话说，socket()返回的套接字用于监听(listen)和接受(accept)客户端请求，这个套接字不能用于与客户端之间发送和接受数据。accept()接受一个客户端的连接请求，并返回一个新的套接字。所谓“新的”就是说这个套接字与socket()返回的套接字不是同一个socket。这个新的套接字用于与这次接受的客户端之间的通信。</p>
+<h5 id="2-四次握手"><a href="#2-四次握手" class="headerlink" title="2.四次握手"></a>2.四次握手</h5><p>当客户端发送信息完毕之后，客户端会与服务端断开连接，此时会发生<strong>4次挥手</strong>。<br><img src="/images/pasted-24.png" alt="upload successful"></p>
+<p>第一次挥手：先由客户端向服务器端发送一个FIN，请求关闭数据传输。</p>
+<p>第二次挥手：当服务器接收到客户端的FIN时，向客户端发送一个ACK，其中ack的值等于FIN+SEQ，此时客户端不再向服务端发送消息，但是服务端还可以向客户端发送信息。</p>
+<p>第三次挥手：服务端向客户端发送一个FIN，去告诉客户端关闭应用。</p>
+<p>第四次挥手：当客户端收到服务端的FIN时，发送一个ACK给服务器。其中ACK的值等于FIN+SEQ。</p>
+<h4 id="三-socket实例"><a href="#三-socket实例" class="headerlink" title="三. socket实例"></a>三. socket实例</h4><h5 id="demo1-同步实例"><a href="#demo1-同步实例" class="headerlink" title="demo1 同步实例"></a>demo1 同步实例</h5><p>这里我抛出来一些简单的socket的demo，先贴出服务端的</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> socket <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> ctime</span><br><span class="line"></span><br><span class="line">HOST = <span class="string">''</span></span><br><span class="line">PORT = <span class="number">11113</span></span><br><span class="line">BUFSIZE = <span class="number">4096</span></span><br><span class="line">ADDR = (HOST, PORT)</span><br><span class="line"></span><br><span class="line">tcpServer = socket(AF_INET, SOCK_STREAM)</span><br><span class="line">tcpServer.bind(ADDR)</span><br><span class="line">tcpServer.listen(<span class="number">10</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="number">1</span>:</span><br><span class="line">    print(<span class="string">'waiting for connection...'</span>)</span><br><span class="line">    tcpClient, addr = tcpServer.accept()</span><br><span class="line">    print(addr)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> <span class="number">1</span>:</span><br><span class="line">        data = tcpClient.recv(BUFSIZE)</span><br><span class="line">        print(data.decode())</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> data:</span><br><span class="line">            print(<span class="string">'---------'</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">        buf = <span class="string">'['</span> + ctime() + <span class="string">']'</span> + data.decode()</span><br><span class="line">        tcpClient.send(buf.encode())</span><br><span class="line"></span><br><span class="line">    tcpClient.close()</span><br><span class="line">tcpServer.close()</span><br></pre></td></tr></table></figure>
+
+<p>服务端会一直监听11113端口，直到有客户端连接进来，会创建一个新的socket用于交换信息。<br>下面是客户端的代码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> socket <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"></span><br><span class="line">HOST = <span class="string">'localhost'</span></span><br><span class="line">PORT = <span class="number">11113</span></span><br><span class="line">BUFSIZE = <span class="number">4096</span></span><br><span class="line">ADDR = (HOST, PORT)</span><br><span class="line"></span><br><span class="line">tcpClient = socket(AF_INET, SOCK_STREAM)</span><br><span class="line">tcpClient.connect(ADDR)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="number">1</span>:</span><br><span class="line">    data = input(<span class="string">'&gt; '</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> data:</span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line">    tcpClient.send(data.encode())</span><br><span class="line"></span><br><span class="line">    data = tcpClient.recv(BUFSIZE)</span><br><span class="line">    print(data.decode())</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> data:</span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">tcpClient.close()</span><br></pre></td></tr></table></figure>
+
+<p>这个demo基本上涵盖了socket通信的整个流程，但是demo中有一些缺点，因为socket.recv()是阻塞的，所以当服务端执行到recv()的时候，会一直等待，直到客户端发送消息才能够继续往下执行代码。这样的结构对于一些实时性要求比较高的场景很不友好。比如说，我们在用实时的视频流进行监控和一些异常计算，当有异常现象的时候，我们会与巡逻小车进行socket进行通信来处理异常，这就要求我们既要能够实时接收摄像头传来的视频流，又要接巡逻小车发来的指令信号，使用上述的demo作为框架就显得不那么合适了。</p>
+<h5 id="2-demo2-异步实例"><a href="#2-demo2-异步实例" class="headerlink" title="2. demo2 异步实例"></a>2. demo2 异步实例</h5><p>有一种解决方法就是使用异步通信来解决，这样我们可以对传来的数据进行监听，当监听到有客户端传来请求时，我们会对传来的消息进行解析处理；当客户端没有传来请求时，服务端就会处理自己的事情。在python中可以使用select完成异步通信，下面有一个demo，这里我只抛出来客户端的demo，服务端的异步处理同客户端：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> socket <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> select</span><br><span class="line"></span><br><span class="line">HOST = <span class="string">'localhost'</span></span><br><span class="line">PORT = <span class="number">6688</span></span><br><span class="line">BUFSIZE = <span class="number">4096</span></span><br><span class="line">ADDR = (HOST, PORT)</span><br><span class="line"></span><br><span class="line">tcpClient = socket(AF_INET, SOCK_STREAM)</span><br><span class="line"></span><br><span class="line">tcpClient.connect(ADDR)</span><br><span class="line"></span><br><span class="line">input = [tcpClient]</span><br><span class="line"><span class="comment"># tcpClient.setblocking(False)</span></span><br><span class="line">print(<span class="string">"["</span>+time.ctime()+<span class="string">"]"</span>  +<span class="string">"发现异常"</span>)</span><br><span class="line">data_exchange = &#123;<span class="string">'Position'</span>:<span class="number">0</span>, <span class="string">'CarArrived'</span>:<span class="literal">False</span>, <span class="string">'ResetCarPosition'</span>:<span class="literal">False</span>, <span class="string">'CarPatrol'</span>:<span class="literal">False</span>&#125;</span><br><span class="line">data = json.dumps(data_exchange)</span><br><span class="line">tcpClient.send(data.encode())</span><br><span class="line">tcpClient.settimeout(<span class="number">5</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="number">1</span>:</span><br><span class="line">    rs, ws, es = select.select(input, [], [], <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">for</span> indata <span class="keyword">in</span> rs:</span><br><span class="line">        <span class="keyword">if</span> indata == tcpClient:</span><br><span class="line">            data = tcpClient.recv(BUFSIZE)</span><br><span class="line">            <span class="keyword">if</span> data:</span><br><span class="line">                car_recv = data.decode()</span><br><span class="line">                data_exchange = json.loads(car_recv)</span><br><span class="line">                <span class="keyword">if</span> data_exchange[<span class="string">'CarPatrol'</span>] == <span class="literal">True</span>:</span><br><span class="line">                    print(<span class="string">"["</span>+time.ctime()+<span class="string">"]"</span>  +<span class="string">"小车已经就绪，重置实验"</span>)</span><br><span class="line">                    data_exchange = &#123;<span class="string">'Position'</span>:<span class="number">0</span>, <span class="string">'CarArrived'</span>:<span class="literal">False</span>, <span class="string">'ResetCarPosition'</span>:<span class="literal">False</span>, <span class="string">'CarPatrol'</span>:<span class="literal">False</span>&#125;</span><br><span class="line">                <span class="keyword">elif</span> data_exchange[<span class="string">'CarArrived'</span>] == <span class="literal">True</span>:</span><br><span class="line">                    print(<span class="string">"["</span>+time.ctime()+<span class="string">"]"</span>  +<span class="string">"小车已经到达异常点，开始处理异常"</span>)</span><br><span class="line">                    time.sleep(<span class="number">3</span>)</span><br><span class="line">                    print(<span class="string">"["</span>+time.ctime()+<span class="string">"]"</span>  +<span class="string">"处理异常结束，小车归位"</span>)</span><br><span class="line">                    data_exchange[<span class="string">'ResetCarPosition'</span>] = <span class="literal">True</span></span><br><span class="line">                    data = json.dumps(data_exchange)</span><br><span class="line">                    tcpClient.send(data.encode())</span><br><span class="line">    print(<span class="string">"1"</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">tcpClient.close()</span><br></pre></td></tr></table></figure>
+
+<h4 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h4><p><a href="https://blog.csdn.net/qq_38131333/article/details/81533192" target="_blank" rel="noopener">网络OSI七层模型、TCP/IP模型以及数据发送封装与解封装过程</a></p>
+<p><a href="https://www.cnblogs.com/dolphinX/p/3460545.html" target="_blank" rel="noopener">简单理解Socket</a></p>
+<p><a href="https://blog.csdn.net/weixin_42255385/article/details/82119968" target="_blank" rel="noopener">socket中accept()函数的理解</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/05/26/Docker-%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80-2-%E2%80%94dockerfile/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1265,83 +1382,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/02/27/hello-world/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Jiajun Ma">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="学无止境">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/02/27/hello-world/" class="post-title-link" itemprop="url">Hello World</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2020-02-27 17:21:34" itemprop="dateCreated datePublished" datetime="2020-02-27T17:21:34+08:00">2020-02-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-02-24 14:53:00" itemprop="dateModified" datetime="2020-02-24T14:53:00+08:00">2020-02-24</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -1412,7 +1452,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-count">22</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1425,7 +1465,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">13</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
