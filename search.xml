@@ -71,6 +71,20 @@
 <p>区别：新的 TCP Reno 版本在快重传之后采用快恢复算法而不是采用慢开始算法。<br><img src="/images/pasted-74.png" alt="upload successful"></p>
 <p>说明：新的 TCP Reno 版本在快重传之后采用快恢复算法而不是采用慢启动算法。从接收方对发送方的流量控制的角度考虑，发送方的发送窗口一定不能超过对方给出的接收窗口rwind 。</p>
 <p>也有的快重传实现是把开始时的拥塞窗口cwnd值再增大一点，即等于 ssthresh + 3 X MSS 。这样做的理由是：既然发送方收到三个重复的确认，就表明有三个分组已经离开了网络。这三个分组不再消耗网络 的资源而是停留在接收方的缓存中。可见现在网络中并不是堆积了分组而是减少了三个分组。因此可以适当把拥塞窗口扩大了些。</p>
+<p>tcp快恢复算法，快恢复过程大致包括以下步骤：</p>
+<ul>
+<li>1、cwnd = sshthresh + 3 * MSS （3的意思是确认有3个数据包被收到了）</li>
+<li>2、重传Duplicated ACKs指定的数据包</li>
+<li>3、如果再收到 duplicated Acks，那么cwnd = cwnd +1</li>
+<li>4、如果收到了新的Ack，那么，cwnd = sshthresh。</li>
+</ul>
+<p>这里关于<font color=#A52A2A size=4 >为什么第一步cwnd为sshthresh+3MSS，以及为什么第三步没收到一个ack，cwnd+1，最后收到新的ack就恢复为sshthresh。</font><br>这里我们用知乎上的回答：<br><a href="https://www.zhihu.com/question/53168634/answer/154822905" target="_blank" rel="noopener">TCP reno版本的快恢复算法最后一步为什么重置窗口？</a></p>
+<pre><code>因为在reno中假定：网络只偶然的丢了一个包。第一句话中+3MSS的原因其实是指你已经收到了3个Dup ack。假定情况如下：你的ssthresh是10000，MSS是1000.那么现在你发送了10个包。始终受到要求第1个包的ACK。然后你再次发生第一个包。还是收到dup ack。这时候Reno让你的cwnd+1，于是你新发了第11个包。循环100次后，你已经发送到了第110个包。
+循环100次后，你已经发送到了第110个包。
+接收端一下子给你回了一个要求第100个包的ACK。于是你的window一下子就向右移动了100个MSS。
+在刚才的inflates过程中，你的cwnd已经达到了10+3+100（N）的一个非常大的数据。而Reno认为，你应该还保持在原有的ssthresh的程度（即10个MSS的程度）
+所以要重置ssthresh。</code></pre><p>这个方案的好处是：每次DUP ACK，你还能以拥塞避免的速度去发送新的数据；避免中间长时间被浪费。当然问题就是，他主要假定只不见了一个包。于是如果不见了多个包，就会又一次进入fast recovery；于是cwnd和ssthresh再次减半。等于丢一个包就是一次减半.</p>
+<p>关于上面这个问题还有一个blog写的比较好我们也可以借鉴一下：<br><a href="https://blog.csdn.net/su_coding/article/details/77372643" target="_blank" rel="noopener">关于快恢复算法中的一些问题</a></p>
 <p>在采用快恢复算法时，慢开始算法只是在TCP连接建立时和网络出现超时时才使用。</p>
 <p>采用这样的拥塞控制方法使得TCP的性能有明显的改进。</p>
 <p>接收方根据自己的接收能力设定了接收窗口rwnd，并把这个窗口值写入TCP首部中的窗口字段，传送给发送方。因此，接收窗口又称为通知窗口。因此，从接收方对发送方的流量控制的角度考虑，发送方的发送窗口一定不能超过对方给出的接收窗口rwnd 。</p>
