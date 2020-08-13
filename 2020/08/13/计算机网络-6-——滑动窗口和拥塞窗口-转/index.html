@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"qq19971017.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="这片文章是结合很多篇blog以及TCP&#x2F;IP详解的滑动窗口部分总结来的，文字基本都是copy，内容不难，本来想自己总结的但是最近事情太多就直接把别人的东西直接拿过来了。  一.窗口定义 因此我们先了解一下16位的窗口大小究竟有什么作用。 窗口分为滑动窗口和拥塞窗口。 滑动窗口是接受数据端使用的窗口大小，用来告知发送端接收端的缓存大小，以此可以控制发送端发送数据的大小，从而达到流量控制的目的。 那">
+<meta property="og:type" content="article">
+<meta property="og:title" content="计算机网络(6)——滑动窗口和拥塞窗口(转)">
+<meta property="og:url" content="https://qq19971017.github.io/2020/08/13/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-6-%E2%80%94%E2%80%94%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E5%92%8C%E6%8B%A5%E5%A1%9E%E7%AA%97%E5%8F%A3-%E8%BD%AC/index.html">
+<meta property="og:site_name" content="学无止境">
+<meta property="og:description" content="这片文章是结合很多篇blog以及TCP&#x2F;IP详解的滑动窗口部分总结来的，文字基本都是copy，内容不难，本来想自己总结的但是最近事情太多就直接把别人的东西直接拿过来了。  一.窗口定义 因此我们先了解一下16位的窗口大小究竟有什么作用。 窗口分为滑动窗口和拥塞窗口。 滑动窗口是接受数据端使用的窗口大小，用来告知发送端接收端的缓存大小，以此可以控制发送端发送数据的大小，从而达到流量控制的目的。 那">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-69.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-70.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-71.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-72.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-73.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-74.png">
+<meta property="article:published_time" content="2020-08-13T12:30:00.000Z">
+<meta property="article:modified_time" content="2020-08-13T14:55:06.271Z">
+<meta property="article:author" content="Jiajun Ma">
+<meta property="article:tag" content="计算机网络">
+<meta property="article:tag" content="TCP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://qq19971017.github.io/images/pasted-69.png">
+
+<link rel="canonical" href="https://qq19971017.github.io/2020/08/13/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-6-%E2%80%94%E2%80%94%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E5%92%8C%E6%8B%A5%E5%A1%9E%E7%AA%97%E5%8F%A3-%E8%BD%AC/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>计算机网络(6)——滑动窗口和拥塞窗口(转) | 学无止境</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="学无止境" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">学无止境</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/08/13/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-6-%E2%80%94%E2%80%94%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E5%92%8C%E6%8B%A5%E5%A1%9E%E7%AA%97%E5%8F%A3-%E8%BD%AC/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Jiajun Ma">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="学无止境">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          计算机网络(6)——滑动窗口和拥塞窗口(转)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-08-13 20:30:00 / 修改时间：22:55:06" itemprop="dateCreated datePublished" datetime="2020-08-13T20:30:00+08:00">2020-08-13</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>这片文章是结合很多篇blog以及TCP/IP详解的滑动窗口部分总结来的，文字基本都是copy，内容不难，本来想自己总结的但是最近事情太多就直接把别人的东西直接拿过来了。</p>
+</blockquote>
+<h3 id="一-窗口定义"><a href="#一-窗口定义" class="headerlink" title="一.窗口定义"></a>一.窗口定义</h3><p><img src="/images/pasted-69.png" alt="upload successful"></p>
+<p>因此我们先了解一下16位的窗口大小究竟有什么作用。</p>
+<p>窗口分为滑动窗口和拥塞窗口。</p>
+<p>滑动窗口是接受数据端使用的窗口大小，用来告知<font color=#A52A2A size=4 >发送端接收端的缓存大小</font>，以此可以控制发送端发送数据的大小，从而达到流量控制的目的。</p>
+<p>那么对于数据的发送端就是拥塞窗口了，拥塞窗口不代表缓存，<font color=#A52A2A size=4 >拥塞窗口指某一源端数据流在一个RTT内可以最多发送的数据包数</font>。</p>
+<h4 id="滑动窗口"><a href="#滑动窗口" class="headerlink" title="滑动窗口"></a>滑动窗口</h4><p>滑动窗口协议是传输层进行流控的一种措施，接收方通过通告发送方自己的可以接受缓冲区大小（这个字段越大说明网络吞吐量越高），从而控制发送方的发送速度，不过如果接收端的缓冲区一旦面临数据溢出，窗口大小值也会随之被设置一个更小的值通知给发送端，从而控制数据发送量（发送端会根据接收端指示，进行流量控制）。</p>
+<p>对ACK的再认识，ack通常被理解为收到数据后给出的一个确认ACK，ACK包含两个非常重要的信息：</p>
+<ul>
+<li><p>一是期望接收到的下一字节的序号n，该n代表接收方已经接收到了前n-1字节数据，此时如果接收方收到第n+1字节数据而不是第n字节数据，接 收方是不会发送序号为n+2的ACK的。举个例子，假如接收端收到1-1024字节，它会发送一个确认号为1025的ACK,但是接下来收到的是 2049-3072，它是不会发送确认号为3072的ACK,而依旧发送1025的ACK。</p>
+</li>
+<li><p>二是当前的窗口大小m，如此发送方在接收到ACK包含的这两个数据后就可以计算出还可以发送多少字节的数据给对方，假定当前发送方已发送到第x字节，则可以发送的字节数就是y=m-(x-n).这就是滑动窗口控制流量的基本原理.</p>
+</li>
+</ul>
+<p>滑动窗口协议如图所示:</p>
+<p><img src="/images/pasted-70.png" alt="upload successful"></p>
+<p>在这个图中，我们将字节从1至11进行 标号。接收方通告的窗口称为提出的窗口，它覆盖了从第4字节到第9字节的区域，表明接收方已经确认了包括第3字节在内的数据，且通告窗口大小为6。我们知 道窗口大小是与确认序号相对应的。发送方计算它的可用窗口，该窗口表明多少数据可以立即被发送。当接收方确认数据后，这个滑动窗口不时地向右移动。窗口两 个边沿的相对运动增加或减少了窗口的大小。我们使用三个术语来描述窗口左右边沿的运动：</p>
+<ul>
+<li>称窗口左边沿向右边沿靠近为窗口合拢。这种现象发生在数据被发送和确认时。</li>
+<li>当窗口右边沿向右移动时将允许发送更多的数据，我们称之为窗口张开。这种现象发生在另一端的接收进程读取已经确认的数据并释放了T C P的接收缓存时。</li>
+<li>当右边缘向左移动时，称之为窗口收缩。当然这是TCP所不允许的。</li>
+</ul>
+<p>当接收端的缓冲区满了，发送端接收到接收端的窗口大小为0，这个时候停止发送数据，这个时候发送端会过了超时重发的时间，发送一个窗口探测的包，此数据端仅含一个字节以获取最新的窗口大小信息。</p>
+<h4 id="拥塞窗口"><a href="#拥塞窗口" class="headerlink" title="拥塞窗口"></a>拥塞窗口</h4><p>拥塞控制：<strong>防止过多的数据注入到网络中，这样可以使网络中的路由器或链路不致过载</strong>。拥塞控制所要做的都有一个<strong>前提：网络能够承受现有的网络负荷</strong>。拥塞控制是一个<strong>全局性的过程</strong>，涉及到所有的主机、路由器，以及与降低网络传输性能有关的所有因素。</p>
+<pre><code>流量控制：指点对点通信量的控制，是端到端正的问题。流量控制所要做的就是抑制发送端发送数据的速率，以便使接收端来得及接收。
+
+拥塞控制代价：需要获得网络内部流量分布的信息。在实施拥塞控制之前，还需要在结点之间交换信息和各种命令，以便选择控制的策略和实施控制。这样就产生了额外的开销。拥塞控制还需要将一些资源分配给各个用户单独使用，使得网络资源不能更好地实现共享。</code></pre><h4 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h4><p>滑动实质上是解决了接收端的缓存的问题，如果从发送端传送的数据超出了接受端所能够接收的最大缓存，那么接收端就会丢包。<br>而拥塞接口是为了解决整个网络中的过载问题，如果大量的数据在网路上传输，超过了网络的承载的上限那么，也会出现路由器也会丢包现象。</p>
+<h3 id="二-几种拥塞控制算法"><a href="#二-几种拥塞控制算法" class="headerlink" title="二.几种拥塞控制算法"></a>二.几种拥塞控制算法</h3><p>慢开始，拥塞避免，快重传和快恢复</p>
+<p>发送方维持一个拥塞窗口 cwnd ( congestion window )的状态变量。拥塞窗口的大小取决于网络的拥塞程度，并且动态地在变化。发送方让自己的发送窗口等于拥塞。</p>
+<p>发送方控制拥塞窗口的原则是：只要网络没有出现拥塞，拥塞窗口就再增大一些，以便把更多的分组发送出去。但只要网络出现拥塞，拥塞窗口就减小一些，以减少注入到网络中的分组数。</p>
+<p>慢开始算法：当主机开始发送数据时，如果立即所大量数据字节注入到网络，那么就有可能引起网络拥塞，因为现在并不清楚网络的负荷情况。因此，较好的方法是 先探测一下，即由小到大逐渐增大发送窗口，也就是说，由小到大逐渐增大拥塞窗口数值。通常在刚刚开始发送报文段时，先把拥塞窗口 cwnd 设置为一个最大报文段MSS的数值。而在每收到一个对新的报文段的确认后，把拥塞窗口增加至多一个MSS的数值。用这样的方法逐步增大发送方的拥塞窗口 cwnd ，可以使分组注入到网络的速率更加合理。</p>
+<p><img src="/images/pasted-71.png" alt="upload successful"></p>
+<p>每经过一个传输轮次，拥塞窗口 cwnd 就加倍。一个传输轮次所经历的时间其实就是往返时间RTT。不过“传输轮次”更加强调：把拥塞窗口cwnd所允许发送的报文段都连续发送出去，并收到了对已发送的最后一个字节的确认。</p>
+<p>另，慢开始的“慢”并不是指cwnd的增长速率慢，而是指在TCP开始发送报文段时先设置cwnd=1，使得发送方在开始时只发送一个报文段（目的是试探一下网络的拥塞情况），然后再逐渐增大cwnd。慢启动实质是解决发送方和接收方之间存在多个路由器和速率较慢的链路时，就有可能出现一些问题。一些中间路由器必须缓存分组，并有可能消耗存储器的空间，慢启动算法是通过观察到新分组进入网络的速率应该与另一端返回确认的速度相同而工作。</p>
+<p>为了防止拥塞窗口cwnd增长过大引起网络拥塞，还需要设置一个慢开始门限ssthresh状态变量（如何设置ssthresh）。慢开始门限ssthresh的用法如下：</p>
+<pre><code>当 cwnd &lt; ssthresh 时，使用上述的慢开始算法。
+
+当 cwnd &gt; ssthresh 时，停止使用慢开始算法而改用拥塞避免算法。
+
+当 cwnd = ssthresh 时，既可使用慢开始算法，也可使用拥塞控制避免算法。</code></pre><p>拥塞避免算法：让拥塞窗口cwnd缓慢地增大，即每经过一个往返时间RTT就把发送方的拥塞窗口cwnd加1，而不是加倍。这样拥塞窗口cwnd按线性规律缓慢增长，比慢开始算法的拥塞窗口增长速率缓慢得多。拥塞避免算法是用于处理丢失分组的方法。<br>无论在慢开始阶段还是在拥塞避免阶段，只要发送方判断网络出现拥塞（其根据就是没有收到确认），就要把慢开始门限ssthresh设置为出现拥塞时的发送 方窗口值的一半（但不能小于2）。然后把拥塞窗口cwnd重新设置为1，执行慢开始算法。这样做的目的就是要迅速减少主机发送到网络中的分组数，使得发生 拥塞的路由器有足够时间把队列中积压的分组处理完毕。</p>
+<p>如下图，用具体数值说明了上述拥塞控制的过程。现在发送窗口的大小和拥塞窗口一样大。<br><img src="/images/pasted-72.png" alt="upload successful"></p>
+<ul>
+<li><p>&lt;1&gt;. 当TCP连接进行初始化时，把拥塞窗口cwnd置为1。前面已说过，为了便于理解，图中的窗口单位不使用字节而使用报文段的个数。慢开始门限的初始值设置为16个报文段，即 cwnd = 16 。</p>
+</li>
+<li><p>&lt;2&gt;. 在执行慢开始算法时，拥塞窗口 cwnd 的初始值为1。以后发送方每收到一个对新报文段的确认ACK，就把拥塞窗口值另1，然后开始下一轮的传输（图中横坐标为传输轮次）。因此拥塞窗口cwnd 随着传输轮次按指数规律增长。当拥塞窗口cwnd增长到慢开始门限值ssthresh时（即当cwnd=16时），就改为执行拥塞控制算法，拥塞窗口按线 性规律增长。</p>
+</li>
+<li><p>&lt;3&gt;. 假定拥塞窗口的数值增长到24时，网络出现超时（这很可能就是网络发生拥塞了）。更新后的ssthresh值变为12（即变为出现超时时的拥塞窗口数值 24的一半），拥塞窗口再重新设置为1，并执行慢开始算法。当cwnd=ssthresh=12时改为执行拥塞避免算法，拥塞窗口按线性规律增长，每经过 一个往返时间增加一个MSS的大小。</p>
+</li>
+</ul>
+<p>强调：“拥塞避免”并非指完全能够避免了拥塞。利用以上的措施要完全避免网络拥塞还是不可能的。“拥塞避免”是说在拥塞避免阶段将拥塞窗口控制为按线性规律增长，使网络比较不容易出现拥塞。</p>
+<h4 id="比较"><a href="#比较" class="headerlink" title="比较"></a>比较</h4><p>相同：提高网络性能。<br>不同：<br>  [1].流量控制：在TCP连接上实现对发送流量的控制，考虑点对点之间对通信量的控制，端到端，即：控制发送端的数据发送速率，使接收端可以来得及接收，保证网络高效稳定运行。<br>  [2].拥塞控制：处理网络拥塞现象，考虑网络能够承受现有的网络负荷，全局性变量，涉及所有的路由器、主机以及与降低网络传输性能有关的因素。防止过多的数据注入到网络，使网络中的路由器或链路不致过载，确保通信子网可以有效为主机传递分组。</p>
+<h4 id="快重传和快恢复"><a href="#快重传和快恢复" class="headerlink" title="快重传和快恢复"></a>快重传和快恢复</h4><p>如果发送方设置的超时计时器时限已到但还没有收到确认，那么很可能是网络出现了拥塞，致使报文段在网络中的某处被丢弃。这时，TCP马上把拥塞窗口 cwnd 减小到1，并执行慢开始算法，同时把慢开始门限值ssthresh减半。这是不使用快重传的情况。</p>
+<p>快重传算法首先要求接收方每收到一个失序的报文段后就立即发出重复确认（为的是使发送方及早知道有报文段没有到达对方）而不要等到自己发送数据时才进行捎带确认。</p>
+<p><img src="/images/pasted-73.png" alt="upload successful"><br>接收方收到了M1和M2后都分别发出了确认。现在假定接收方没有收到M3但接着收到了M4。显然，接收方不能确认M4，因为M4是收到的失序报文段。根据 可靠传输原理，接收方可以什么都不做，也可以在适当时机发送一次对M2的确认。但按照快重传算法的规定，接收方应及时发送对M2的重复确认，这样做可以让 发送方及早知道报文段M3没有到达接收方。发送方接着发送了M5和M6。接收方收到这两个报文后，也还要再次发出对M2的重复确认。这样，发送方共收到了 接收方的四个对M2的确认，其中后三个都是重复确认。快重传算法还规定，发送方只要一连收到三个重复确认就应当立即重传对方尚未收到的报文段M3，而不必 继续等待M3设置的重传计时器到期。由于发送方尽早重传未被确认的报文段，因此采用快重传后可以使整个网络吞吐量提高约20%。</p>
+<p><strong>为什么要收到3个以上重复的ack才进行重传</strong><br>由于我们不知道一个重复的ACK是由一个丢失的报文段引起的，还是由仅仅出现了几个报文段的重排序，因此我们等到少量重复的ack到来。假如这只是一些报文段的重新排序，因此我们等待少量重复的ack到来。假如这只是一些报文段的重新排序，则在重新排序的报文段被处理并产生一个新的ACK之前，只可能生产1～2个重复的ack。如果收到3个或3个以上的重复的ack，就非常啃呢个是一个报文段丢失，因此我们就重传丢失的数据报文段，而无需等待超时定时器溢出。这就是快速重传算法。接下来执行的不是慢启动算法而是快速恢复算法。</p>
+<p>与快重传配合使用的还有快恢复算法，其过程有以下两个要点：</p>
+<ul>
+<li><p>&lt;1&gt;. 当发送方连续收到三个重复确认，就执行“乘法减小”算法，把慢开始门限ssthresh减半。这是为了预防网络发生拥塞。请注意：接下去不执行慢开始算法。</p>
+</li>
+<li><p>&lt;2&gt;. 由于发送方现在认为网络很可能没有发生拥塞，因此与慢开始不同之处是现在不执行慢开始算法（即拥塞窗口cwnd现在不设置为1），而是把cwnd值设置为 慢开始门限ssthresh减半后的数值，然后开始执行拥塞避免算法（“加法增大”），使拥塞窗口缓慢地线性增大。</p>
+</li>
+</ul>
+<p>下图给出了快重传和快恢复的示意图，并标明了“TCP Reno版本”。</p>
+<p>区别：新的 TCP Reno 版本在快重传之后采用快恢复算法而不是采用慢开始算法。<br><img src="/images/pasted-74.png" alt="upload successful"></p>
+<p>说明：新的 TCP Reno 版本在快重传之后采用快恢复算法而不是采用慢启动算法。从接收方对发送方的流量控制的角度考虑，发送方的发送窗口一定不能超过对方给出的接收窗口rwind 。</p>
+<p>也有的快重传实现是把开始时的拥塞窗口cwnd值再增大一点，即等于 ssthresh + 3 X MSS 。这样做的理由是：既然发送方收到三个重复的确认，就表明有三个分组已经离开了网络。这三个分组不再消耗网络 的资源而是停留在接收方的缓存中。可见现在网络中并不是堆积了分组而是减少了三个分组。因此可以适当把拥塞窗口扩大了些。</p>
+<p>在采用快恢复算法时，慢开始算法只是在TCP连接建立时和网络出现超时时才使用。</p>
+<p>采用这样的拥塞控制方法使得TCP的性能有明显的改进。</p>
+<p>接收方根据自己的接收能力设定了接收窗口rwnd，并把这个窗口值写入TCP首部中的窗口字段，传送给发送方。因此，接收窗口又称为通知窗口。因此，从接收方对发送方的流量控制的角度考虑，发送方的发送窗口一定不能超过对方给出的接收窗口rwnd 。</p>
+<p>发送方窗口的上限值 = Min [ rwnd, cwnd ]</p>
+<p>当rwnd &lt; cwnd 时，是接收方的接收能力限制发送方窗口的最大值。</p>
+<p>当cwnd &lt; rwnd 时，则是网络的拥塞限制发送方窗口的最大值。</p>
+<h3 id="转载连接"><a href="#转载连接" class="headerlink" title="转载连接"></a>转载连接</h3><p><a href="https://blog.csdn.net/ligupeng7929/article/details/79597423" target="_blank" rel="noopener">TCP的滑动窗口与拥塞窗口
+</a></p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Jiajun Ma
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://qq19971017.github.io/2020/08/13/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-6-%E2%80%94%E2%80%94%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E5%92%8C%E6%8B%A5%E5%A1%9E%E7%AA%97%E5%8F%A3-%E8%BD%AC/" title="计算机网络(6)——滑动窗口和拥塞窗口(转)">https://qq19971017.github.io/2020/08/13/计算机网络-6-——滑动窗口和拥塞窗口-转/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag"># 计算机网络</a>
+              <a href="/tags/TCP/" rel="tag"># TCP</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/06/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-5-%E2%80%94%E2%80%94TCP/" rel="prev" title="计算机网络(5)——TCP">
+      <i class="fa fa-chevron-left"></i> 计算机网络(5)——TCP
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#一-窗口定义"><span class="nav-number">1.</span> <span class="nav-text">一.窗口定义</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#滑动窗口"><span class="nav-number">1.1.</span> <span class="nav-text">滑动窗口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#拥塞窗口"><span class="nav-number">1.2.</span> <span class="nav-text">拥塞窗口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#对比"><span class="nav-number">1.3.</span> <span class="nav-text">对比</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二-几种拥塞控制算法"><span class="nav-number">2.</span> <span class="nav-text">二.几种拥塞控制算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#比较"><span class="nav-number">2.1.</span> <span class="nav-text">比较</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#快重传和快恢复"><span class="nav-number">2.2.</span> <span class="nav-text">快重传和快恢复</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#转载连接"><span class="nav-number">3.</span> <span class="nav-text">转载连接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Jiajun Ma</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/qq19971017" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;qq19971017" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:mjjshu@163.com" title="E-Mail → mailto:mjjshu@163.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://qinhan.site/" title="https:&#x2F;&#x2F;qinhan.site&#x2F;" rel="noopener" target="_blank">QinHan(Game Developer & Designer)</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jiajun Ma</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
