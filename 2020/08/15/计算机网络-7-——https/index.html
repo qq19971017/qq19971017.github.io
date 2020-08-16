@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"qq19971017.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="概念 我们通常使用http协议用于网页的浏览，但是http有一个最大的缺点就是明文传输，这样在被攻击者截取了web浏览器和网站服务器之间传输的报文，就可以直接看懂信息，并利用信息进行犯罪。为了提高安全性，我们提出了https协议，https协议主要解决了两个问题。   解决了明文传输的不可靠性。 进行身份验证，保证数据是从正确的服务器发送过来。确认网站的真实性。  http与https区别 htt">
+<meta property="og:type" content="article">
+<meta property="og:title" content="计算机网络(7)——https">
+<meta property="og:url" content="https://qq19971017.github.io/2020/08/15/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-7-%E2%80%94%E2%80%94https/index.html">
+<meta property="og:site_name" content="学无止境">
+<meta property="og:description" content="概念 我们通常使用http协议用于网页的浏览，但是http有一个最大的缺点就是明文传输，这样在被攻击者截取了web浏览器和网站服务器之间传输的报文，就可以直接看懂信息，并利用信息进行犯罪。为了提高安全性，我们提出了https协议，https协议主要解决了两个问题。   解决了明文传输的不可靠性。 进行身份验证，保证数据是从正确的服务器发送过来。确认网站的真实性。  http与https区别 htt">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-75.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-76.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-77.png">
+<meta property="og:image" content="https://qq19971017.github.io/images/pasted-78.png">
+<meta property="article:published_time" content="2020-08-15T15:23:00.000Z">
+<meta property="article:modified_time" content="2020-08-16T05:27:50.199Z">
+<meta property="article:author" content="Jiajun Ma">
+<meta property="article:tag" content="计算机网络">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://qq19971017.github.io/images/pasted-75.png">
+
+<link rel="canonical" href="https://qq19971017.github.io/2020/08/15/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-7-%E2%80%94%E2%80%94https/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>计算机网络(7)——https | 学无止境</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="学无止境" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">学无止境</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/08/15/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-7-%E2%80%94%E2%80%94https/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Jiajun Ma">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="学无止境">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          计算机网络(7)——https
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-15 23:23:00" itemprop="dateCreated datePublished" datetime="2020-08-15T23:23:00+08:00">2020-08-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-16 13:27:50" itemprop="dateModified" datetime="2020-08-16T13:27:50+08:00">2020-08-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h3><blockquote>
+<p>我们通常使用http协议用于网页的浏览，但是http有一个最大的缺点就是明文传输，这样在被攻击者截取了web浏览器和网站服务器之间传输的报文，就可以直接看懂信息，并利用信息进行犯罪。为了提高安全性，我们提出了https协议，https协议主要解决了两个问题。</p>
+</blockquote>
+<ol>
+<li>解决了明文传输的不可靠性。</li>
+<li>进行身份验证，保证数据是从正确的服务器发送过来。确认网站的真实性。</li>
+</ol>
+<h4 id="http与https区别"><a href="#http与https区别" class="headerlink" title="http与https区别"></a>http与https区别</h4><ol>
+<li>http协议需要到ca申请证书，一般免费证书较少，因而需要一定费用。</li>
+<li>http是超文本传输协议，信息是明文传输，https则是具有安全性的ssl/tls加密传输协议。</li>
+<li>http和https使用的是完全不同的连接方式，用的端口也不一样，前者是80，后者是443。</li>
+<li>http的连接很简单，是无状态的；HTTPS协议是由SSL/TLS+HTTP协议构建的可进行加密传输、身份认证的网络协议，比http协议安全。</li>
+</ol>
+<h3 id="https的通信步骤"><a href="#https的通信步骤" class="headerlink" title="https的通信步骤"></a>https的通信步骤</h3><p>在此之前先介绍一些基本的概念：<br><strong>对称加密</strong>：对称加密是指客户端和服务端在传输数据的时候，公用一把锁，这把锁既可以对明文加密，又可以对加密的内容进行解码。<br><strong>非对称加密</strong>：非对称加密是指在进行传输的过程中共有一对公/密匙来起作用，公钥匙是对外公开的由客户端拥有（实际上每个人都可以拥有），而密匙是只有服务端知道，由公匙加密的报文只能用密匙解密。<br>相比较而言非对称加密安全性更高，因为在使用对称加密的时候需要首先传递共享密匙，这一步有可能会被拦截并被盗取的。而非堆成加密是不存在这样的情况的，公匙是对外公开的，而密匙是服务器私有的，只要服务器没有泄漏密匙，就基本不会出现安全问题。但是同样的非对称加密的算法是指数级别的，而对称加密算法速度更快。<br>https协议结合了两种算法的优缺点，使用了一种混合的加密算法。具体的算法我们后面介绍。</p>
+<p><strong>数字签名</strong><br>数字签名的目的是为了保证客户端收到的报文是从正确的服务端收到的。通常是求取要发送报文的数字散列H(m),然后用密匙对这个数字散列加密K(H(m))，并加到明文报文后面，构成m+K(H(m)),服务端将新的报文发送到客户端，客户端将前面的明文进行哈希散列构成H(m’)，并对后面的K(H(m))进行解密，得到H(m)，比较这两个哈希散列是否一直，如果一致就说明数字签名是正确的，数据也是完整的。</p>
+<p><strong>数字证书</strong><br>数字签名虽然已经能够提高准确率，但是黑客仍然可以进行攻击，他们可以拦截服务端发送的报文，并用黑客自己生成的钥匙对加密这个明文报文，并连同公匙一起发送给客户端，客户端拿到公匙和签名发现验证通过就会误以为这是客户端发送的数据。而会用这个黑客的公匙对报文进行加密，并发送给服务端，而服务端并不能将这个数据进行解密，进而无法解决问题。</p>
+<p>从这个问题看出来，要想使公匙有用，需要能够正式你具有的公匙实际上就是与你要进行通行的实体。这个时候就可以用ca认证来解决这个问题。我们可以让ca去认证这个服务端的合法信息。一旦ca验证了某个实体的身份，这个CA会生成一个将其身份和实体的公匙绑定起来的证书。这个证书包含这个公匙和公匙所有者全局唯一的身份表示信息。由ca对这个数字证书进行签名。</p>
+<p>这样服务端发送的其实是ca签署的证书(由ca私匙加密)，然后客户端收到证书后从ca获取公匙，并进行身份验证，最后在利用公匙对明文报文验证其合法性。</p>
+<p>(1) 客户使用https的url访问服务器，要求与web服务器建立ssl连接。<br>(2) Web服务器收到客户端请求后，会将网站的证书信息（证书中包含公钥）传送一份给客户端。<br>(3) 客户端的浏览器与Web服务器开始协商SSL/TLS连接的安全等级，也就是信息加密的等级。<br>(4) 客户端的浏览器根据双方同意的安全等级，建立会话密钥，然后利用网站的公钥将会话密钥加密，并传送给网站。<br>(5) Web服务器利用自己的私钥解密出会话密钥。<br>(6) Web服务器利用会话密钥加密与客户端之间的通信。</p>
+<p><img src="/images/pasted-75.png" alt="upload successful"><br><img src="/images/pasted-76.png" alt="upload successful"></p>
+<h4 id="CA证书的申请及其使用过程"><a href="#CA证书的申请及其使用过程" class="headerlink" title="CA证书的申请及其使用过程"></a>CA证书的申请及其使用过程</h4><p>上面客户端使用HTTPS与服务器通信中使用到了CA认证，这里可能大家会问为什么不直接使用非对称加密的形式直接进行，首先这里先介绍下非对称加密。</p>
+<p>非对称加密：客户端和服务端均拥有一个公有密匙和一个私有密匙。公有密匙可以对外暴露，而私有密匙只有自己可见。</p>
+<p>使用公有密匙加密的消息，只有对应的私有密匙才能解开。反过来，使用私有密匙加密的消息，只有公有密匙才能解开。这样客户端在发送消息前，先用服务器的公匙对消息进行加密，服务器收到后再用自己的私匙进行解密。</p>
+<p><img src="/images/pasted-77.png" alt="upload successful"></p>
+<p>非对称加密的优点：</p>
+<ul>
+<li><p>非对称加密采用公有密匙和私有密匙的方式，解决了http中消息保密性问题，而且使得私有密匙泄露的风险降低。</p>
+</li>
+<li><p>因为公匙加密的消息只有对应的私匙才能解开，所以较大程度上保证了消息的来源性以及消息的准确性和完整性。</p>
+</li>
+</ul>
+<p>非对称加密的缺点：</p>
+<ul>
+<li><p>非对称加密时需要使用到接收方的公匙对消息进行加密，但是公匙不是保密的，任何人都可以拿到，中间人也可以。那么中间人可以做两件事，第一件是中间人可以在客户端与服务器交换公匙的时候，将客户端的公匙替换成自己的。这样服务器拿到的公匙将不是客户端的，而是中间人的。服务器也无法判断公匙来源的正确性。第二件是中间人可以不替换公匙，但是他可以截获客户端发来的消息，然后篡改，然后用服务器的公匙加密再发往服务器，服务器将收到错误的消息。</p>
+</li>
+<li><p>非对称加密的性能相对对称加密来说会慢上几倍甚至几百倍，比较消耗系统资源。正是因为如此，https将两种加密结合了起来。</p>
+</li>
+</ul>
+<p>为了应对上面非对称加密带来的问题，我们就引入了数字证书与数字签名</p>
+<p>故CA认证介入我们的HTTPS连接的过程如下：</p>
+<p>1、服务器拥有自己的私钥与公钥</p>
+<p>2、服务器将公钥交给CA认证机构，请求给予一份数字证书</p>
+<p>3、CA认证机构生成数字证书，并颁发给服务器</p>
+<p>4、服务器将带有公钥信息的数字证书发给客户端</p>
+<p>5、进入客户端生成对称密钥再进行对接的过程……</p>
+<p><img src="/images/pasted-78.png" alt="upload successful"></p>
+<p>虽然说HTTPS有很大的优势，但其相对来说，还是存在不足之处的：</p>
+<p>（1）HTTPS协议握手阶段比较费时，会使页面的加载时间延长近50%，增加10%到20%的耗电；</p>
+<p>（2）HTTPS连接缓存不如HTTP高效，会增加数据开销和功耗，甚至已有的安全措施也会因此而受到影响；</p>
+<p>（3）SSL证书需要钱，功能越强大的证书费用越高，个人网站、小网站没有必要一般不会用。</p>
+<p>（4）SSL证书通常需要绑定IP，不能在同一IP上绑定多个域名，IPv4资源不可能支撑这个消耗。</p>
+<p>（5）HTTPS协议的加密范围也比较有限，在黑客攻击、拒绝服务攻击、服务器劫持等方面几乎起不到什么作用。最关键的，SSL证书的信用链体系并不安全，特别是在某些国家可以控制CA根证书的情况下，中间人攻击一样可行。</p>
+<p>实践中建议保留http。所以我们在切换的时候可以做http和https的兼容，具体实现方式是，去掉页面链接中的http头部，这样可以自动匹配http头和https头。例如：将<a href="http://www.baidu.com改为//www.baidu.com。然后当用户从http的入口进入访问页面时，页面就是http，如果用户是从https的入口进入访问页面，页面即是https的" target="_blank" rel="noopener">http://www.baidu.com改为//www.baidu.com。然后当用户从http的入口进入访问页面时，页面就是http，如果用户是从https的入口进入访问页面，页面即是https的</a></p>
+<p>如何优化HTTPS的速度<br>1、HSTS重定向技术</p>
+<p>HSTS（HTTP Strict Transport Security）技术，启用HSTS后，将保证浏览器始终连接到网站的 HTTPS 加密版本。</p>
+<pre><code>1. 用户在浏览器里输入 HTTP 协议进行访问时，浏览器会自动将 HTTP 转换为 HTTPS 进行访问，确保用户访问安全；
+
+2. 省去301跳转的出现，缩短访问时间；
+
+3. 能阻止基于 SSL Strip 的中间人攻击，万一证书有错误，则显示错误，用户不能回避警告，从而能够更加有效安全的保障用户的访问。</code></pre><p>2、TLS握手优化</p>
+<pre><code>在传输应用数据之前，客户端必须与服务端协商密钥、加密算法等信息，服务端还要把自己的证书发给客户端表明其身份，这些环节构成 TLS 握手过程。
+
+采用 False Start （抢先开始）技术，浏览器在与服务器完成 TLS 握手前，就开始发送请求数据，服务器在收到这些数据后，完成 TLS 握手的同时，开始发送响应数据。
+
+开启 False Start 功能后，数据传输时间将进一步缩短。</code></pre><p>3、Session Identifier（会话标识符）复用</p>
+<pre><code>如果用户的一个业务请求包含了多条的加密流，客户端与服务器将会反复握手，必定会导致更多的时间损耗。或者某些特殊情况导致了对话突然中断，双方就需要重新握手，增加了用户访问时间。
+
+（1）服务器为每一次的会话都生成并记录一个 ID 号，然后发送给客户端；
+
+（2）如果客户端发起重新连接，则只要向服务器发送该 ID 号；
+
+（3）服务器收到客户端发来的 ID 号，然后查找自己的会话记录，匹配 ID 之后，双方就可以重新使用之前的对称加密秘钥进行数据加密传输，而不必重新生成，减少交互时间。</code></pre><p>4、开启OSCP Stapling，提高TLS握手效率</p>
+<pre><code>采用OCSP Stapling ，提升 HTTPS 性能。服务端主动获取 OCSP 查询结果并随着证书一起发送给客户端，从而客户端可直接通过 Web Server 验证证书，提高 TLS 握手效率。
+
+服务器模拟浏览器向 CA 发起请求，并将带有 CA 机构签名的 OCSP 响应保存到本地，然后在与客户端握手阶段，将 OCSP 响应下发给浏览器，省去浏览器的在线验证过程。由于浏览器不需要直接向 CA 站点查询证书状态，这个功能对访问速度的提升非常明显。</code></pre><p>5、完全前向加密PFS，保护用户数据，预防私钥泄漏</p>
+<pre><code>    非对称加密算法 RSA，包含了公钥、私钥，其中私钥是保密不对外公开的，由于此算法既可以用于加密也可以用于签名，所以用途甚广，但是还是会遇到一些问题：
+
+ （1） 假如我是一名黑客，虽然现在我不知道私钥，但是我可以先把客户端与服务器之前的传输数据（已加密）全部保存下来
+
+（2）如果某一天，服务器维护人员不小心把私钥泄露了，或者服务器被我攻破获取到了私钥
+
+（3）那我就可以利用这个私钥，破解掉之前已被我保存的数据，从中获取有用的信息
+
+    所以为了防止上述现象发生，我们必须保护好自己的私钥。
+
+    如果私钥确实被泄漏了，那我们改如何补救呢？那就需要PFS（perfect forward secrecy）完全前向保密功能，此功能用于客户端与服务器交换对称密钥，起到前向保密的作用，也即就算私钥被泄漏，黑客也无法破解先前已加密的数据。维基解释是：长期使用的主密钥泄漏不会导致过去的会话密钥泄漏
+
+    实现此功能需要服务器支持以下算法和签名组合：
+
+（1）ECDHE 密钥交换、RSA 签名；
+
+（2）ECDHE 密钥交换、ECDSA 签名；</code></pre>
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Jiajun Ma
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://qq19971017.github.io/2020/08/15/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-7-%E2%80%94%E2%80%94https/" title="计算机网络(7)——https">https://qq19971017.github.io/2020/08/15/计算机网络-7-——https/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag"># 计算机网络</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/13/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-6-%E2%80%94%E2%80%94%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E5%92%8C%E6%8B%A5%E5%A1%9E%E7%AA%97%E5%8F%A3-%E8%BD%AC/" rel="prev" title="计算机网络(6)——滑动窗口和拥塞窗口(转)">
+      <i class="fa fa-chevron-left"></i> 计算机网络(6)——滑动窗口和拥塞窗口(转)
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#概念"><span class="nav-number">1.</span> <span class="nav-text">概念</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#http与https区别"><span class="nav-number">1.1.</span> <span class="nav-text">http与https区别</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#https的通信步骤"><span class="nav-number">2.</span> <span class="nav-text">https的通信步骤</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#CA证书的申请及其使用过程"><span class="nav-number">2.1.</span> <span class="nav-text">CA证书的申请及其使用过程</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Jiajun Ma</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/qq19971017" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;qq19971017" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:mjjshu@163.com" title="E-Mail → mailto:mjjshu@163.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://qinhan.site/" title="https:&#x2F;&#x2F;qinhan.site&#x2F;" rel="noopener" target="_blank">QinHan(Game Developer & Designer)</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jiajun Ma</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

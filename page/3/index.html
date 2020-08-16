@@ -181,6 +181,226 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/03/01/JVM%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-2-%E2%80%94%E2%80%94%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Jiajun Ma">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="学无止境">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/03/01/JVM%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-2-%E2%80%94%E2%80%94%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">JVM学习笔记(2)——类加载机制详解</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-03-01 11:17:00" itemprop="dateCreated datePublished" datetime="2020-03-01T11:17:00+08:00">2020-03-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-06-18 14:28:00" itemprop="dateModified" datetime="2020-06-18T14:28:00+08:00">2020-06-18</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="一-类加载机制概念"><a href="#一-类加载机制概念" class="headerlink" title="一. 类加载机制概念"></a>一. 类加载机制概念</h3><p>我们前面讲到了JVM的工作原理说到，对JAVA源代码编译出来的.class字节码文件，需要通过JVM将字节码转化为底层可识别的机器码，而第一步就是将class文件中的类描述数据加载到虚拟机中。并对数据进行校验、转换解析、初始化，使这些数据最终成为可以被JVM直接使用的Java类型，我们称这样的步骤叫做JVM的类加载机制。</p>
+<h3 id="二-类加载过程"><a href="#二-类加载过程" class="headerlink" title="二. 类加载过程"></a>二. 类加载过程</h3><p>类从被加载到虚拟机内存中开始，到卸载出内存为止，它的整个生命周期包括：加载、验证、准备、解析、初始化、使用和卸载七个阶段。其中验证、准备、解析3个阶段统称为连接，它们开始的顺序如下图所示：</p>
+<p><img src="/images/pasted-6.png" alt="upload successful"></p>
+<p>这里加载、连接、初始化是在JVM装载器中进行的。在这五个阶段中，加载、验证、准备和初始化这四个阶段发生的顺序是确定的，而解析阶段则不一定，它在某些情况下可以在初始化阶段之后开始，这是为了支持Java语言的运行时绑定（也成为动态绑定或晚期绑定）。另外注意这里的几个阶段是按顺序开始，而不是按顺序进行或完成，因为这些阶段通常都是互相交叉地混合进行的，通常在一个阶段执行的过程中调用或激活另一个阶段。</p>
+<p>这里简要说明下Java中的绑定：绑定指的是把一个方法的调用与方法所在的类(方法主体)关联起来，对java来说，绑定分为静态绑定和动态绑定：</p>
+<ul>
+<li>静态绑定：即前期绑定。在程序执行前方法已经被绑定，此时由编译器或其它连接程序实现。针对java，简单的可以理解为程序编译期的绑定。java当中的方法只有final，static，private和构造方法是前期绑定的。</li>
+<li>动态绑定：即晚期绑定，也叫运行时绑定。在运行时根据具体对象的类型进行绑定。在java中，几乎所有的方法都是后期绑定的。</li>
+</ul>
+<p>下面我们具体介绍加载、连接、初始化这三个过程。</p>
+<h4 id="1-加载"><a href="#1-加载" class="headerlink" title="1. 加载"></a>1. 加载</h4><p>加载时类加载过程的第一个阶段，在加载阶段，虚拟机需要完成以下三件事情：</p>
+<ul>
+<li>通过一个类的全限定名来获取其定义的二进制字节流。</li>
+<li>将这个字节流所代表的静态存储结构转化为方法区的运行时数据结构。</li>
+<li>在内存中生成一个代表这个类的java.lang.Class对象，作为方法区这个类的各种数据的访问入口。</li>
+</ul>
+<p>这样说起来有些难以理解，我们可以举一个简单的例子，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> ClassLoaderTest;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Example1</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> a = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        System.out.println(Example1.a);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们在类中初始化了一个static int类型的元素a，在加载这个类时，JVM首先会从classpath路径下找到一个叫Example1.class的字节流文件，然后将此字节流文件中的静态数据和静态代码块（这里指的就是我们的static int a）放入到方法区内，并在内存中生成一个Example1对象，这个对象是java.lang.Class类型的<strong>(由加载器提取并放入堆中)</strong>，可以用来访问方法区内属于这个类的各种数据。这里我们Example1.a就是访问可存在方法区中的static int类型元素。</p>
+<p><font color="#dd0000">值得注意的是class对象也是存放在堆中，方法区中存放的只是类型数据</font></p>
+<p>类的加载方式有很多种，可以从JAR包中、网络获取、JSP文件生成Class文件、从数据库中获取等。</p>
+<p>相对于类加载的其他阶段而言，加载阶段（准确地说，是加载阶段获取类的二进制字节流的动作）是可控性最强的阶段，因为开发人员既可以使用系统提供的类加载器来完成加载，也可以自定义自己的类加载器来完成加载。这里就需要对类加载器有充分的了解，我会在后续详细介绍不同的类加载器。</p>
+<p><font color="#dd0000">我们需要注意数组类和非数组类的加载是有一定区别的。</font>数组本身不是通过类加载器创建的，它是通过JAVA虚拟机直接创建的，但是数组中的元素类型最终是靠类加载器创建，一个类加载器遵循一下规则：</p>
+<ul>
+<li>如果数组的组件类型（指的是数组去掉一个维度的类型）是引用类型，那就递归采用本节中定义的加载过程去加载这个组件类型，数组C将在加载该组件类型的类加载器的类名称空间被标识</li>
+<li>如果数组的组件类型不是引用类型（例如int[]数组），java虚拟机将会吧数组C标记为于引导类加载器相关联</li>
+<li>数组类的可见性与他的组件类型相一致，如果组件不是引用类型，那数组类型的可见性默认为public<br/></li>
+</ul>
+<p>我们看一个例子：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> ClassLoaderTest;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Example2</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> a =<span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Example2 [] a = <span class="keyword">new</span> Example2[<span class="number">5</span>];</span><br><span class="line">        Example2 b = <span class="keyword">new</span> Example2();</span><br><span class="line">        System.out.println(a.getClass());</span><br><span class="line">        System.out.println(b.getClass());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>getClass()表示的是获取实例的类型类，也就是我们在内存空间生成的java.lang.Class类型结果，结果显示为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">class [LClassLoaderTest.Example2;</span><br><span class="line">class ClassLoaderTest.Example2</span><br></pre></td></tr></table></figure>
+<p>这里可以看到数组也是一个类，但是数组类型和他的组件类型是不一样的，会有[L来标识数组类型。具体内容可以参考一下这篇内容：<a href="https://zhuanlan.zhihu.com/p/83110138" target="_blank" rel="noopener">如何理解数组在Java中作为一个类？</a></p>
+<h4 id="2-验证"><a href="#2-验证" class="headerlink" title="2. 验证"></a>2. 验证</h4><p>验证的目的是为了确保Class文件中的字节流包含的信息符合当前虚拟机的要求，而且不会危害虚拟机自身的安全。不同的虚拟机对类验证的实现可能会有所不同，但大致都会完成以下四个阶段的验证：文件格式的验证、元数据的验证、字节码验证和符号引用验证。主要有以下几种验证。</p>
+<p><strong>文件格式验证：</strong><br>主要验证字节流是否符合Class文件格式的规范，如果符合则把字节流加载到方法区中进行存储。如主次版本号是否在当前虚拟机处理范围内， 开头是否有0xCAFEBABE等。</p>
+<p><strong>元数据验证：</strong><br>元数据验证：对类的元数据信息进行语义校验（其实就是对类中的各数据类型进行语法校验），保证不存在不符合Java语法规范的元数据信息。</p>
+<p><strong>字节码验证：</strong><br>该阶段验证的主要工作是进行数据流和控制流分析，对类的方法体进行校验分析，以保证被校验的类的方法在运行时不会做出危害虚拟机安全的行为。</p>
+<p><strong>符号引用验证：</strong><br>这是最后一个阶段的验证，它发生在虚拟机将符号引用转化为直接引用的时候（解析阶段中发生该转化，后面会有讲解），主要是对类自身以外的信息（常量池中的各种符号引用）进行匹配性的校验。</p>
+<h4 id="3-准备"><a href="#3-准备" class="headerlink" title="3. 准备"></a>3. 准备</h4><p>准备阶段是正式为类变量分配内存并设置类变量初始值的阶段，这些内存都将在方法区中进行分。这时候进行内存分配的仅包括类变量（static），而不包括实例变量，实例变量会在对象实例化时随着对象一块分配在Java堆中。这里所设置的初始值通常情况下是数据类型默认的零值（如0、0L、null、false等），而不是被在Java代码中被显式地赋予的值。</p>
+<h4 id="4-解析"><a href="#4-解析" class="headerlink" title="4. 解析"></a>4. 解析</h4><p>解析阶段是虚拟机将常量池内的符号引用替换为直接引用的过程。</p>
+<p>符号引用（Symbolic Reference）：符号引用以一组符号来描述所引用的目标，符号引用可以是任何形式的字面量，符号引用与虚拟机实现的内存布局无关，引用的目标并不一定已经在内存中。</p>
+<p>直接引用（Direct Reference）：直接引用可以是直接指向目标的指针、相对偏移量或是一个能间接定位到目标的句柄。直接引用是与虚拟机实现的内存布局相关的，同一个符号引用在不同的虚拟机实例上翻译出来的直接引用一般都不相同，如果有了直接引用，那引用的目标必定已经在内存中存在。</p>
+<ul>
+<li>类或方法解析： 判断所要转化成的直接引用是对数组类型，还是普通的对象类型的引用，从而进行不同的解析。</li>
+<li>字段解析：对字段进行解析时，会先在本类中查找是否包含有简单名称和字段描述符都与目标相匹配的字段，如果有，则查找结束；如果没有，则会按照继承关系从上下往上递归搜索该类所实现的各个接口和它们的父接口，还没有，则按照继承关系从下往上递归搜索其父类，直至查找结束，查找流程如下图所示：<br><img src="/images/pasted-7.png" alt="upload successful"></li>
+</ul>
+<p><font color="#dd0000">最后需要注意：理论上是按照上述顺序进行搜索解析，但在实际应用中，虚拟机的编译器实现可能要比上述规范要求的更严格一些。如果有一个同名字段同时出现在该类的接口和父类中，或同时在自己或父类的接口中出现，编译器可能会拒绝编译。</font><br/></p>
+<ul>
+<li><p>类方法解析：对类方法的解析与对字段解析的搜索步骤差不多，只是多了判断该方法所处的是类还是接口的步骤，而且对类方法的匹配搜索，是先搜索父类，再搜索接口。</p>
+</li>
+<li><p>接口方法解析：与类方法解析步骤类似，只是接口不会有父类，因此，只递归向上搜索父接口就行了。</p>
+</li>
+</ul>
+<h4 id="4-初始化"><a href="#4-初始化" class="headerlink" title="4. 初始化"></a>4. 初始化</h4><p>初始化是类加载过程的最后一步，到了此阶段，才真正开始执行类中定义的Java程序代码。在准备阶段，类变量已经被赋过一次系统要求的初始值，而在初始化阶段，则是根据程序员通过程序指定的主观计划去初始化类变量和其他资源，或者可以从另一个角度来表达：初始化阶段是执行类构造器 &lt;clinit&gt;()方法的过程。<br>这里简单说明下 &lt;clinit&gt;()方法的执行规则:</p>
+<pre><code>1、&lt;clinit&gt;（）方法是由编译器自动收集类中的所有类变量的赋值动作和静态语句块中的语句合并产生的，编译器收集的顺序是由语句在源文件中出现的顺序所决定的，静态语句块中只能访问到定义在静态语句块之前的变量，定义在它之后的变量，在前面的静态语句中可以赋值，但是不能访问。
+
+2、&lt;clinit&gt;（）方法与实例构造器&lt;init&gt;（）方法（类的构造函数）不同，它不需要显式地调用父类构造器，虚拟机会保证在子类的&lt;clinit&gt;（）方法执行之前，父类的&lt;clinit&gt;（）方法已经执行完毕。因此，在虚拟机中第一个被执行的&lt;clinit&gt;（）方法的类肯定是java.lang.Object。
+
+3、&lt;clinit&gt;（）方法对于类或接口来说并不是必须的，如果一个类中没有静态语句块，也没有对类变量的赋值操作，那么编译器可以不为这个类生成&lt;clinit&gt;（）方法。
+
+4、接口中不能使用静态语句块，但仍然有类变量（final static）初始化的赋值操作，因此接口与类一样会生成&lt;clinit&gt;（）方法。但是接口鱼类不同的是：执行接口的&lt;clinit&gt;（）方法不需要先执行父接口的&lt;clinit&gt;（）方法，只有当父接口中定义的变量被使用时，父接口才会被初始化。另外，接口的实现类在初始化时也一样不会执行接口的&lt;clinit&gt;（）方法。
+
+5、虚拟机会保证一个类的&lt;clinit&gt;（）方法在多线程环境中被正确地加锁和同步，如果多个线程同时去初始化一个类，那么只会有一个线程去执行这个类的&lt;clinit&gt;（）方法，其他线程都需要阻塞等待，直到活动线程执行&lt;clinit&gt;（）方法完毕。如果在一个类的&lt;clinit&gt;（）方法中有耗时很长的操作，那就可能造成多个线程阻塞，在实际应用中这种阻塞往往是很隐蔽的。</code></pre><p>我们看一段代码来更深入的理解上面的规则：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> ClassLoaderTest;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Father1</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> a = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">static</span>&#123;</span><br><span class="line">        a = <span class="number">2</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Child1</span> <span class="keyword">extends</span> <span class="title">Father1</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> b = a;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ClinitTest</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        System.out.println(Child1.b);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>此时的结果是 2</p>
+<p>我们来看得到该结果的步骤。首先在准备阶段为类变量分配内存并设置类变量初始值，这样A和B均被赋值为默认值0，而后再在调用<clinit>（）方法时给他们赋予程序中指定的值。当我们调用Child.b时，触发Child的<clinit>（）方法，根据规则2，在此之前，要先执行完其父类Father的<clinit>（）方法，又根据规则1，在执行<clinit>（）方法时，需要按static语句或static变量赋值操作等在代码中出现的顺序来执行相关的static语句，因此当触发执行Father的<clinit>（）方法时，会先将a赋值为1，再执行static语句块中语句，将a赋值为2，而后再执行Child类的<clinit>（）方法，这样便会将b的赋值为2.</p>
+<p>如果我们颠倒一下Father类中“public static int a = 1;”语句和“static语句块”的顺序，程序执行后，则会打印出1。很明显是根据规则1，执行Father的<clinit>（）方法时，根据顺序先执行了static语句块中的内容，后执行了“public static int a = 1;”语句。</p>
+<p>另外，在颠倒二者的顺序之后，如果在static语句块中对a进行访问（比如将a赋给某个变量），在编译时将会报错，因为根据规则1，它只能对a进行赋值，而不能访问。</p>
+<p>Java虚拟机规范中严格规定了<font color="#dd0000">有且只有五种情况必须对类进行初始化：</font><br/></p>
+<ul>
+<li><ol>
+<li>使用new字节码指令创建类的实例，或者使用getstatic、putstatic读取或设置一个静态字段的值（放入常量池中的常量除外），或者调用一个静态方法的时候，对应类必须进行过初始化。</li>
+</ol>
+</li>
+<li><ol start="2">
+<li>通过java.lang.reflect包的方法对类进行反射调用的时候，如果类没有进行过初始化，则要首先进行初始化。</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>当初始化一个类的时候，如果发现其父类没有进行过初始化，则首先触发父类初始化。</li>
+</ol>
+</li>
+<li><ol start="4">
+<li>当虚拟机启动时，用户需要指定一个主类（包含main()方法的类），虚拟机会首先初始化这个类。</li>
+</ol>
+</li>
+<li><ol start="5">
+<li>使用jdk1.7的动态语言支持时，如果一个java.lang.invoke.MethodHandle实例最后的解析结果REF_getStatic、REF_putStatic、RE_invokeStatic的方法句柄，并且这个方法句柄对应的类没有进行初始化，则需要先触发其初始化。</li>
+</ol>
+</li>
+</ul>
+<p>注意，虚拟机规范使用了“有且只有”这个词描述，这五种情况被称为“主动引用”，除了这五种情况，所有其他的类引用方式都不会触发类初始化，被称为“被动引用”。</p>
+<p>被动引用的例子一：<br>对于静态字段，只有直接定义这个字段的类才会被初始化，因此通过其子类来引用父类中定义的静态字段，只会触发父类的初始化而不会触发子类的初始化。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SuperClass</span> </span>&#123;</span><br><span class="line">	<span class="comment">//静态变量value</span></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> value = <span class="number">666</span>;</span><br><span class="line">	<span class="comment">//静态块，父类初始化时会调用</span></span><br><span class="line">	<span class="keyword">static</span>&#123;</span><br><span class="line">		System.out.println(<span class="string">"父类初始化！"</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="comment">//子类</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SubClass</span> <span class="keyword">extends</span> <span class="title">SuperClass</span></span>&#123;</span><br><span class="line">	<span class="comment">//静态块，子类初始化时会调用</span></span><br><span class="line">	<span class="keyword">static</span>&#123;</span><br><span class="line">		System.out.println(<span class="string">"子类初始化！"</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="comment">//主类、测试类</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NotInit</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">		System.out.println(SubClass.value);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出结果为： </p>
+<p>   父类初始化<br>   33</p>
+<p>被动引用的例子二：<br>通过数组定义来引用类，不会触发子类的初始化。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">//父类</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SuperClass</span> </span>&#123;</span><br><span class="line">	<span class="comment">//静态变量value</span></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> value = <span class="number">666</span>;</span><br><span class="line">	<span class="comment">//静态块，父类初始化时会调用</span></span><br><span class="line">	<span class="keyword">static</span>&#123;</span><br><span class="line">		System.out.println(<span class="string">"父类初始化！"</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="comment">//主类、测试类</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NotInit</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">		SuperClass[] test = <span class="keyword">new</span> SuperClass[<span class="number">10</span>];</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>结果为空白，这里没有触发类SuperClass的初始化阶段，但是会触发[lSuperClass的类初始化，它是由虚拟机自动生成的，这我们在前面的加载这一阶段中已经提到了。</p>
+<p>被动引用例子三：<br>刚刚讲解时也提到，静态常量在编译阶段就会被存入调用类的常量池中，不会引用到定义常量的类，这是一个特例，需要特别记忆，不会触发类的初始化！</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">//常量类</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ConstClass</span> </span>&#123;</span><br><span class="line">	<span class="keyword">static</span>&#123;</span><br><span class="line">		System.out.println(<span class="string">"常量类初始化！"</span>);</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String HELLOWORLD = <span class="string">"hello world!"</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="comment">//主类、测试类</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NotInit</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">		System.out.println(ConstClass.HELLOWORLD);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>结果只会输出hell world！不会输出常量类初始化，这是因为final是修饰的HELLOWORLD在编译阶段通过常量传播优化，已经将常量的值”hello world!”存储在NotInit类的敞亮池中，以后NotInit对常量ConstClass.HELLOWORLD的引用实际都会被转化为NotInit类对自身常量池的引用。也就是说NotInit类的Class文件实际上并没有ConstClass类的符号引用入口，这两个类在编译成Class文件之后就没有关系了。</p>
+<h3 id="三-类加载器"><a href="#三-类加载器" class="headerlink" title="三. 类加载器"></a>三. 类加载器</h3><p>JVM设计者把类加载阶段中的“通过’类全名’来获取定义此类的二进制字节流”这个动作放到Java虚拟机外部去实现，以便让应用程序自己决定如何去获取所需要的类。实现这个动作的代码模块称为“类加载器”。</p>
+<p><strong>1.类与类加载器</strong><br>对于任何一个类，都需要由加载它的类加载器和这个类来确立其在JVM中的唯一性。也就是说，两个类来源于同一个Class文件，并且被同一个类加载器加载，这两个类才相等。</p>
+<p><strong>2. 类加载器分类</strong><br>启动类加载器：<br>主要加载的是JVM自身需要的类，这个类加载使用C++语言实现的，是虚拟机自身的一部分，它负责将 <JAVA_HOME>/lib路径下的核心类库或-Xbootclasspath参数指定的路径下的jar包加载到内存中，在工作中它负责加载扩展类加载器和系统类加载器，并作为这些加载器的父加载器，注意必由于虚拟机是按照文件名识别加载jar包的，如rt.jar，如果文件名不被虚拟机识别，即使把jar包丢到lib目录下也是没有作用的(出于安全考虑，Bootstrap启动类加载器只加载包名为java、javax、sun等开头的类)。</p>
+<p>扩展类加载器：<br>它负责加载扩展目录(%JAVA_HOME%/jre/lib/ext)下的jar包，派生与ClassLoader类，父类加载器为启动类加载器，用户可以把自己开发的类打包成jar包放在这个目录下即可扩展核心类以外的新功能。</p>
+<p>系统类加载器或称为应用程序类加载器：<br>是指Sun公司实现的sun.misc.Launcher$AppClassLoader。它负责加载系统类路径java -classpath或-D java.class.path 指定路径下的类库，也就是我们经常用到的classpath路径，开发者可以直接使用系统类加载器，一般情况下该类加载是程序中默认的类加载器，通过ClassLoader#getSystemClassLoader()方法可以获取到该类加载器</p>
+<p>在Java的日常应用程序开发中，类的加载几乎是由上述3种类加载器相互配合执行的，在必要时，我们还可以自定义类加载器，需要注意的是，Java虚拟机对class文件采用的是按需加载的方式，也就是说当需要使用该类时才会将它的class文件加载到内存生成class对象，而且加载某个类的class文件时，Java虚拟机采用的是双亲委派模式即把请求交由父类处理，它一种任务委派模式，下面我们进一步了解它。</p>
+<h3 id="双亲委派模型"><a href="#双亲委派模型" class="headerlink" title="双亲委派模型"></a>双亲委派模型</h3><p><strong>双亲委派模型原理：</strong><br>双亲委派模式要求除了顶层的启动类加载器外，其余的类加载器都应当有自己的父类加载器，请注意双亲委派模式中的父子关系并非通常所说的类继承关系，而是采用组合关系来复用父类加载器的相关代码，类加载器间的关系如下：</p>
+<p><img src="/images/pasted-8.png" alt="upload successful"><br>其工作原理的是，如果一个类加载器收到了类加载请求，它并不会自己先去加载，而是把这个请求委托给父类的加载器去执行，如果父类加载器还存在其父类加载器，则进一步向上委托，依次递归，请求最终将到达顶层的启动类加载器，如果父类加载器可以完成类加载任务，就成功返回，倘若父类加载器无法完成此加载任务，子加载器才会尝试自己去加载，这就是双亲委派模式。</p>
+<p><strong>双亲委派模型优势</strong><br>采用双亲委派模式的是好处是Java类随着它的类加载器一起具备了一种带有优先级的层次关系。通过这种层级关可以避免类的重复加载，当父亲已经加载了该类时，就没有必要子ClassLoader再加载一次。其次是考虑到安全因素，java核心api中定义类型不会被随意替换，假设通过网络传递一个名为java.lang.Integer的类，通过双亲委托模式传递到启动类加载器，而启动类加载器在核心Java API发现这个名字的类，发现该类已被加载，并不会重新加载网络传递的过来的java.lang.Integer，而直接返回已加载过的Integer.class，这样便可以防止核心API库被随意篡改。可能你会想，如果我们在classpath路径下自定义一个名为java.lang.SingleInterge类(该类是胡编的)呢？该类并不存在java.lang中，经过双亲委托模式，传递到启动类加载器中，由于父类加载器路径下并没有该类，所以不会加载，将反向委托给子类加载器加载，最终会通过系统类加载器加载该类。但是这样做是不允许，因为java.lang是核心API包，需要访问权限，强制加载将会报出如下异常：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java.lang.SecurityException: Prohibited package name: java.lang</span><br></pre></td></tr></table></figure>
+
+<p><strong>双亲委派破坏</strong></p>
+<p>在Java应用中存在着很多服务提供者接口（Service Provider Interface，SPI），这些接口允许第三方为它们提供实现，如常见的 SPI 有 JDBC、JNDI等，这些 SPI 的接口属于 Java 核心库，一般存在rt.jar包中，由Bootstrap类加载器加载，而 SPI 的第三方实现代码则是作为Java应用所依赖的 jar 包被存放在classpath路径下，由于SPI接口中的代码经常需要加载具体的第三方实现类并调用其相关方法，但SPI的核心接口类是由引导类加载器来加载的，而Bootstrap类加载器无法直接加载SPI的实现类，同时由于双亲委派模式的存在，Bootstrap类加载器也无法反向委托AppClassLoader加载器SPI的实现类。在这种情况下，我们就需要一种特殊的类加载器来加载第三方的类库，而线程上下文类加载器就是很好的选择。<br>    线程上下文类加载器（contextClassLoader）是从 JDK 1.2 开始引入的，我们可以通过java.lang.Thread类中的getContextClassLoader()和 setContextClassLoader(ClassLoader cl)方法来获取和设置线程的上下文类加载器。如果没有手动设置上下文类加载器，线程将继承其父线程的上下文类加载器，初始线程的上下文类加载器是系统类加载器（AppClassLoader）,在线程中运行的代码可以通过此类加载器来加载类和资源，如下图所示，以jdbc.jar加载为例</p>
+<p><img src="/images/pasted-9.png" alt="upload successful"><br>从图可知rt.jar核心包是有Bootstrap类加载器加载的，其内包含SPI核心接口类，由于SPI中的类经常需要调用外部实现类的方法，而jdbc.jar包含外部实现类(jdbc.jar存在于classpath路径)无法通过Bootstrap类加载器加载，因此只能委派线程上下文类加载器把jdbc.jar中的实现类加载到内存以便SPI相关类使用。显然这种线程上下文类加载器的加载方式破坏了“双亲委派模型”，它在执行过程中抛弃双亲委派加载链模式，使程序可以逆向使用类加载器，当然这也使得Java类加载器变得更加灵活。为了进一步证实这种场景，不妨看看DriverManager类的源码，DriverManager是Java核心rt.jar包中的类，该类用来管理不同数据库的实现驱动即Driver，它们都实现了Java核心包中的java.sql.Driver接口，如mysql驱动包中的com.mysql.jdbc.Driver，这里主要看看如何加载外部实现类，在DriverManager初始化时会执行如下代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">//DriverManager是Java核心包rt.jar的类</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DriverManager</span> </span>&#123;</span><br><span class="line">	<span class="comment">//省略不必要的代码</span></span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        loadInitialDrivers();<span class="comment">//执行该方法</span></span><br><span class="line">        println(<span class="string">"JDBC DriverManager initialized"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//loadInitialDrivers方法</span></span><br><span class="line"> <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">loadInitialDrivers</span><span class="params">()</span> </span>&#123;</span><br><span class="line">     sun.misc.Providers()</span><br><span class="line">     AccessController.doPrivileged(<span class="keyword">new</span> PrivilegedAction&lt;Void&gt;() &#123;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> Void <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">				<span class="comment">//加载外部的Driver的实现类</span></span><br><span class="line">                ServiceLoader&lt;Driver&gt; loadedDrivers = ServiceLoader.load(Driver<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">              <span class="comment">//省略不必要的代码......</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>在DriverManager类初始化时执行了loadInitialDrivers()方法,在该方法中通过ServiceLoader.load(Driver.class);去加载外部实现的驱动类，ServiceLoader类会去读取mysql的jdbc.jar下META-INF文件的内容，如下所示</p>
+<p><img src="/images/pasted-10.png" alt="upload successful"></p>
+<p>而com.mysql.jdbc.Driver继承类如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Driver</span> <span class="keyword">extends</span> <span class="title">com</span>.<span class="title">mysql</span>.<span class="title">cj</span>.<span class="title">jdbc</span>.<span class="title">Driver</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Driver</span><span class="params">()</span> <span class="keyword">throws</span> SQLException </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        System.err.println(<span class="string">"Loading class `com.mysql.jdbc.Driver'. This is deprecated. The new driver class is `com.mysql.cj.jdbc.Driver'. "</span></span><br><span class="line">                + <span class="string">"The driver is automatically registered via the SPI and manual loading of the driver class is generally unnecessary."</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从注释可以看出平常我们使用com.mysql.jdbc.Driver已被丢弃了，取而代之的是com.mysql.cj.jdbc.Driver，也就是说官方不再建议我们使用如下代码注册mysql驱动</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">//不建议使用该方式注册驱动类</span></span><br><span class="line">Class.forName(<span class="string">"com.mysql.jdbc.Driver"</span>);</span><br><span class="line">String url = <span class="string">"jdbc:mysql://localhost:3306/cm-storylocker?characterEncoding=UTF-8"</span>;</span><br><span class="line"><span class="comment">// 通过java库获取数据库连接</span></span><br><span class="line">Connection conn = java.sql.DriverManager.getConnection(url, <span class="string">"root"</span>, <span class="string">"root@555"</span>);</span><br><span class="line">  </span><br></pre></td></tr></table></figure>
+
+<p>而是直接去掉注册步骤，如下即可</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">String url = <span class="string">"jdbc:mysql://localhost:3306/cm-storylocker?characterEncoding=UTF-8"</span>;</span><br><span class="line"><span class="comment">// 通过java库获取数据库连接</span></span><br><span class="line">Connection conn = java.sql.DriverManager.getConnection(url, <span class="string">"root"</span>, <span class="string">"root@555"</span>);</span><br></pre></td></tr></table></figure>
+
+<p>这样ServiceLoader会帮助我们处理一切，并最终通过load()方法加载，看看load()方法实现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;S&gt; <span class="function">ServiceLoader&lt;S&gt; <span class="title">load</span><span class="params">(Class&lt;S&gt; service)</span> </span>&#123;</span><br><span class="line">	 <span class="comment">//通过线程上下文类加载器加载</span></span><br><span class="line">      ClassLoader cl = Thread.currentThread().getContextClassLoader();</span><br><span class="line">      <span class="keyword">return</span> ServiceLoader.load(service, cl);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>很明显了确实通过线程上下文类加载器加载的，实际上核心包的SPI类对外部实现类的加载都是基于线程上下文类加载器执行的，通过这种方式实现了Java核心代码内部去调用外部实现类。我们知道线程上下文类加载器默认情况下就是AppClassLoader，那为什么不直接通过getSystemClassLoader()获取类加载器来加载classpath路径下的类的呢？其实是可行的，但这种直接使用getSystemClassLoader()方法获取AppClassLoader加载类有一个缺点，那就是代码部署到不同服务时会出现问题，如把代码部署到Java Web应用服务或者EJB之类的服务将会出问题，因为这些服务使用的线程上下文类加载器并非AppClassLoader，而是Java Web应用服自家的类加载器，类加载器不同。，所以我们应用该少用getSystemClassLoader()。总之不同的服务使用的可能默认ClassLoader是不同的，但使用线程上下文类加载器总能获取到与当前程序执行相同的ClassLoader，从而避免不必要的问题。ok~.关于线程上下文类加载器暂且聊到这，前面阐述的DriverManager类，大家可以自行看看源码，相信会有更多的体会，另外关于ServiceLoader本篇并没有过多的阐述，毕竟我们主题是类加载器，但ServiceLoader是个很不错的解耦机制，大家可以自行查阅其相关用法。</p>
+<h3 id="面试题、"><a href="#面试题、" class="headerlink" title="面试题、"></a>面试题、</h3><p>下面我们看一些面试来回顾一下学习的内容，这也是为以后面试做的一些准备吧。</p>
+<ul>
+<li>看你简历写得熟悉JVM，那你说说类的加载过程吧？</li>
+<li>我们可以自定义一个String类来使用吗？（判断类的唯一性）</li>
+<li>什么是类加载器，类加载器有哪些？</li>
+<li>多线程的情况下，类的加载为什么不会出现重复加载的情况？</li>
+<li>什么是双亲委派机制？它有啥优势？可以打破这种机制吗？</li>
+</ul>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><p>视频：</p>
+<p><a href="https://www.bilibili.com/video/av83622425" target="_blank" rel="noopener">尚硅谷宋红康JVM教程(java虚拟机详解，jvm从入门到精通)</a></p>
+<p>文章：</p>
+<p><a href="https://juejin.im/post/5a810b0e5188257a5c606a85" target="_blank" rel="noopener">Java类加载机制（全套）</a><br><a href="https://www.cnblogs.com/aspirant/p/7200523.html" target="_blank" rel="noopener">Java 类加载机制(阿里)-何时初始化类</a><br><a href="https://blog.csdn.net/ns_code/article/details/17881581" target="_blank" rel="noopener">【深入Java虚拟机】之四：类加载机制</a><br><a href="https://blog.csdn.net/ns_code/article/details/17845821" target="_blank" rel="noopener">【深入Java虚拟机】之三：类初始化</a><br><a href="https://blog.csdn.net/zhangliangzi/article/details/51338291" target="_blank" rel="noopener">JVM类加载机制详解（二）类加载器与双亲委派模型</a><br><a href="https://blog.csdn.net/javazejian/article/details/73413292" target="_blank" rel="noopener"> 深入理解Java类加载器(ClassLoader)</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/02/28/JVM%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0(1)%E2%80%94%E2%80%94JVM%E6%95%B4%E4%BD%93%E6%A6%82%E5%BF%B5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -501,7 +721,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
