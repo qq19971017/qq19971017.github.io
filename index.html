@@ -181,6 +181,106 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/08/18/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-8-%E2%80%94%E2%80%94tcp%E7%B2%98%E5%8C%85%E4%BB%A5%E5%8F%8A%E5%AF%B9tcp%E6%B5%81%E5%8D%8F%E8%AE%AE%E7%9A%84%E7%90%86%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Jiajun Ma">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="学无止境">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/18/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-8-%E2%80%94%E2%80%94tcp%E7%B2%98%E5%8C%85%E4%BB%A5%E5%8F%8A%E5%AF%B9tcp%E6%B5%81%E5%8D%8F%E8%AE%AE%E7%9A%84%E7%90%86%E8%A7%A3/" class="post-title-link" itemprop="url">计算机网络(8)——tcp粘包以及对tcp流协议的理解</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-08-18 19:56:00 / 修改时间：20:23:58" itemprop="dateCreated datePublished" datetime="2020-08-18T19:56:00+08:00">2020-08-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="TCP流协议"><a href="#TCP流协议" class="headerlink" title="TCP流协议"></a>TCP流协议</h3><p>TCP是一种流协议，这意着数据是以字节流的形式发送给接收者，没有固定的报文和报文边界的概念。接收端读取tcp数据是无法预知在这一次读操作中会返回多少字节。</p>
+<p>假设主机A向主机B发送两条报文M1和M2，调用两次send发送两条独立的报文，但是数据在传输过程中并不会遵循这个方式。在发送端，send操作只是将数据复制到主机A的TCP/IP协议栈，由TCP决定怎么发送和每次发送多少。</p>
+<p>这个决定的过程很复杂，如：发送窗口、拥塞窗口、路径上的最大传输单元等。也就是说数据的发送分为很多种情况：</p>
+<ul>
+<li><ol>
+<li>M1和M2分开发送数据。</li>
+</ol>
+</li>
+<li><ol start="2">
+<li>M1和M2数据一起传输。</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>M1的先发送一部分，然后剩下的和M2一起发送。</li>
+</ol>
+</li>
+<li><ol start="4">
+<li>先发送M1和M2的一部分，然后发送M2剩下的数据。</li>
+</ol>
+</li>
+</ul>
+<h4 id="缓存发送"><a href="#缓存发送" class="headerlink" title="缓存发送"></a>缓存发送</h4><p>其实仔细看过TCP协议内容的人就可以发现，TCP协议允许发送端将几次发送的数据包缓存起来合成一个数据包发送到网络上去，因为这样可以获得更高的效率，这一行为通常是在操作系统提供的SOCKET中实现，所以在应用层对此毫无所觉。所以我们在程序中调用SOCKET的send发送了数据后操作系统有可能缓存了起来，等待后续的数据一起发送，而不是立即发送出去。send的文档中对此也有说明。</p>
+<h4 id="分包发送"><a href="#分包发送" class="headerlink" title="分包发送"></a>分包发送</h4><p>网络传输的概念中有MTU的概念，也即是网络中一个数据包最大的长度。如果要发送超过这个长度的数据包，就需要分包发送。当调用SOCKET的send发送超过MTU的数据包时，操作系统提供的SOCKET实现会自动将这个数据包分割成几个不超过MTU的数据包发送。</p>
+<h3 id="粘包"><a href="#粘包" class="headerlink" title="粘包"></a>粘包</h3><p><strong>当出现这些上面这些情况的时候，接收端就会发现接收到的数据和发送的数据的次数不一致。这个就是粘包现象。</strong></p>
+<p>当我们传输如文件这种数据时，流式的传输非常适合，但是当我们传输指令之类的数据结构时，流式模型就有一个问题：无法知道指令的结束。所以粘包必须问题是必须<strong>解决</strong>的。</p>
+<h4 id="定长结构"><a href="#定长结构" class="headerlink" title="定长结构"></a>定长结构</h4><p>因为粘包问题的存在，接收端不能想当然的以为发送端一次发送了多少数据就能一次收到多少数据。如果发送端发送了一个固定长度的数据结构，接收端必须每次都严格判断接收到额数据的长度，当收到的数据长度不足时，需要再次接收数据，直到满足长度，当收到的数据多于固定长度时，需要截断数据，并将多余的数据缓存起来，视为长度不足需要再次接收处理。</p>
+<h4 id="不定长结构"><a href="#不定长结构" class="headerlink" title="不定长结构"></a>不定长结构</h4><p>定长的数据结构是一种理想的情况，真正的应用中通常使用的都是不定长的数据结构。<br>对于发送不定长的数据结构，简单的做法就是选一个固定的字符作为数据包结束标志，接收到这个字符就代表一个数据包传输完成了。<br>但是这只能应用于字符数据，因为二进制数据中很难确定结束字符到底是结束还是原本要传输的数据内容（使用字符来标识数据的边界在传输二进制数据时时可以实现的，只是实现比较复杂和低效。想了解可以参考以太网传输协议）。<br><strong>目前最通用的做法是在每次发送的数据的固定偏移位置写入数据包的长度。</strong><br>接收端只要一开始读取固定偏移的数据就可以知道这个数据包的长度，接下来的流程就和固定长度数据结构的处理流程类似。<br>所以对于处理粘包的关键在于提前获取到数据包的长度，无论这个长度是提前商定好的还是写在在数据包的开头。<br>因为在每次发送的数据的固定偏移位置写入数据包的长度的方法是最通用的一种方法，所以对这种方法实现中的一些容易出错误的地方在此特别说明。</p>
+<ul>
+<li>通常我们使用2~4个字节来存放数据长度，多字节数据的网络传输需要注意字节序，所以要注意接受者和发送者要使用相同的字节序来解析数据长度。</li>
+<li>每次新开始接收一段数据时不要急着直接去解析数据长度，先确保目前收到的数据已经足够解析出数据长度，例如数据开头的2个字节存储了数据长度，那么一定确保接收了2个字节以上的数据后才去解析数据长度。</li>
+<li>如果没做到这一点的服务器代码，收到了一个字节就去解析数据长度的，结果得到的长度是内存中的随机值，结果必然是崩溃的。</li>
+</ul>
+<h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><p><a href="https://blog.csdn.net/bjrxyz/article/details/73351248?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.channel_param&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.channel_param" target="_blank" rel="noopener">TCP新手误区–粘包的处理</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/08/15/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-7-%E2%80%94%E2%80%94https/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1510,160 +1610,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/06/05/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-3-%E2%80%94%E2%80%94HTTP/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Jiajun Ma">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="学无止境">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/06/05/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-3-%E2%80%94%E2%80%94HTTP/" class="post-title-link" itemprop="url">计算机网络(3)——HTTP</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2020-06-05 21:06:00" itemprop="dateCreated datePublished" datetime="2020-06-05T21:06:00+08:00">2020-06-05</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-06-06 16:46:10" itemprop="dateModified" datetime="2020-06-06T16:46:10+08:00">2020-06-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="一-HTTP简介"><a href="#一-HTTP简介" class="headerlink" title="一. HTTP简介"></a>一. HTTP简介</h3><blockquote>
-<p>今天看了一些http协议的一些相关的概念，准备在博客中记录一下。<br>HTTP是客户端和服务端用于通信的协议，可以用来传输文本、图片、文件。他是基于TCP连接，所以说HTTP协议是一个可靠的协议，当HTTP客户端发起一个与服务端的TCP连接，一旦连接建立起来，该浏览器和服务器进程就可以通过套接字接口访问TCP。</p>
-</blockquote>
-<h3 id="二-HTTP特性"><a href="#二-HTTP特性" class="headerlink" title="二. HTTP特性"></a>二. HTTP特性</h3><h4 id="1-HTTP的无状态"><a href="#1-HTTP的无状态" class="headerlink" title="1. HTTP的无状态"></a>1. HTTP的无状态</h4><p>HTTP是一种无状态的协议，我们如何去理解无状态协议呢。当浏览器向服务端连续发送相同的请求时，服务器不会因为两次请求的相同而返回不同的响应，而是从新去发送请求的对象，就像服务器完全忘记之前做过的事情一样，换一句话说就是每一次请求都是完全独立的。因为HTTP服务器不会保存关于客户的任何相关信息，所以说HTTP是一个无状态的。</p>
-<p>那如果我们需要使用HTTP协议去维持一个有状态的场景应该怎么办呢。比如说我们登陆网站，我们会对服务端发送一个登陆请求，登陆上以后我们想浏览网站，就会对服务端发送其他请求，我们想要服务端记住我们已经登陆的状态，这种情况下我们应该如何去处理问题呢？为了帮助HTTP变得有状态，我们通常使用Session和Cookie，我这里先卖一个关子，后面为大家详细介绍。</p>
-<h4 id="2-HTTP的长连接和短连接"><a href="#2-HTTP的长连接和短连接" class="headerlink" title="2. HTTP的长连接和短连接"></a>2. HTTP的长连接和短连接</h4><p>HTTP的短连接就是，当客户端向服务端每发送一次请求是就要建立一次TCP连接然后传输数据然后立刻关闭连接，这样当客户端向服务端请求的web页面含有多个对象时如图片、视频等，每多一个对象，客户端就需要重新和服务端建立一次连接，这样无疑会增加网页加载的时间。</p>
-<p>而从HTTP/1.1起，默认使用长连接，用以保持连接特性。使用长连接的HTTP协议，会在响应头加入这行代码：<br>Connection:keep-alive</p>
-<p>在使用长连接的情况下，当一个网页打开完成后，客户端和服务器之间用于传输HTTP数据的TCP连接不会关闭，客户端再次访问这个服务器时，会继续使用这一条已经建立的连接。Keep-Alive不会永久保持连接，它有一个保持时间，可以在不同的服务器软件（如Apache）中设定这个时间。实现长连接需要客户端和服务端都支持长连接。</p>
-<p>我们都说HTTP长连接和短连接本质上是TCP的长连接和短连接，应为HTTP是应用层上的协议，它的底层是基于TCP，应为TCP协议支持长连接，能够保持TCP在请求结束后不立刻关闭，所以说HTTP支持长连接，如果TCP协议在请求结束后立刻关闭，我们说这样的HTTP是短连接的。</p>
-<p>当我们请求的一个网页含有大量的图片、CSS、JS等静态资源，长连接能够帮助我们只建立一个TCP通道就可以完成全部的请求，这就省下了大量的资源消耗。</p>
-<h3 id="三-HTTP格式"><a href="#三-HTTP格式" class="headerlink" title="三. HTTP格式"></a>三. HTTP格式</h3><p>应为HTTP不仅用于发送请求服务端，还用于响应客户端。所以HTTP包含了请求报文格式和响应报文格式。</p>
-<h4 id="1-请求报文格式"><a href="#1-请求报文格式" class="headerlink" title="1. 请求报文格式"></a>1. 请求报文格式</h4><p><img src="/images/pasted-30.png" alt="upload successful"><br>请求报文包括，请求行、请求头部、请求体。<br><strong>请求行</strong></p>
-<ul>
-<li><p>请求方法：有GET、POST、PUT、DELET。GET请求参数可以放在URL后面，而POST请求的数据参数只能放在请求数据里面，和GET请求相比POST请求更安全一些，并且应为POST请求的参数是放在请求数据内，POST可以传输的数据也更多一些。PUT和DELET使用的更少一些，以我的使用经验来说，这些往往适合REST风格配合使用。</p>
-</li>
-<li><p>URL：是指请求的资源</p>
-</li>
-<li><p>协议版本：指HTTP协议的版本，如HTTP/1.1</p>
-</li>
-</ul>
-<p><strong>请求头部</strong><br>请求头部由头部字段名：值的格式构成，看起来像JSON格式，我介绍一些比较常用的。</p>
-<ul>
-<li><p>user-agent: 这的是用户使用浏览器版本。例如：user-agent:Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36。这个是chrome的引擎。</p>
-</li>
-<li><p>Cookie：用于在客户端存储少量的信息，通常用于实现session功能。</p>
-</li>
-<li><p>Host：请求的资源在哪个主机的端口上。</p>
-</li>
-</ul>
-<p><strong>请求数据</strong><br>请求数据又叫请求体，使用是用于传输html表单中的信息。通常来说使用POST方法会将参数放到请求体中，而使用GET方法一般不会放在请求体中。</p>
-<h4 id="2-响应报文格式"><a href="#2-响应报文格式" class="headerlink" title="2. 响应报文格式"></a>2. 响应报文格式</h4><p><img src="/images/pasted-32.png" alt="upload successful"><br>响应报文协议是当服务端进行处理返回给客户端的信息，这里面同样包含了3个部分，响应行、响应头、响应正文。<br><strong>响应行</strong><br>由3部分组成，分别为：协议版本，状态码，状态码描述，之间由空格分隔。</p>
-<p>状态代码为3位数字，200~299的状态码表示成功，300~399的状态码指资源重定向，400~499的状态码指客户端请求出错，500~599的状态码指服务端出错（HTTP/1.1向协议中引入了信息性状态码，范围为100~199）</p>
-<p>这里举出一些常见的：<br><img src="/images/pasted-33.png" alt="upload successful"></p>
-<p><strong>响应头</strong><br>与请求头部类似，为响应报文添加了一些附加信息<br><img src="/images/pasted-34.png" alt="upload successful"></p>
-<h3 id="cookie"><a href="#cookie" class="headerlink" title="cookie"></a>cookie</h3><p>我们前面提到了http是无状态的。这简化了服务器的设计，并且可以允许程序员去开发可以同时处理数以千计的TCP连接的高新能Web服务器。然而一个Web站点经常希望能够识别用户。为此，HTTP使用了cookie。cookie在HTTP应用中有四个部分：</p>
-<ul>
-<li><ol>
-<li>http请求头部包含了cookie字段</li>
-</ol>
-</li>
-<li><ol start="2">
-<li>http响应报文包含了Set-Cookie字段</li>
-</ol>
-</li>
-<li><ol start="3">
-<li>服务端数据库会保存cookie的相关信息。</li>
-</ol>
-</li>
-<li><ol start="4">
-<li>客户端会保存cookie信息的文件。</li>
-</ol>
-</li>
-</ul>
-<p>我们举一个例子，假设张三晚上想上淘宝，当他第一次上淘宝时，我们假定他以前访问过淘宝，当请求报文到达淘宝的时候，淘宝的服务器会生成一个唯一的识别码，并以此作为索引在他的后端数据库产生一个表项，接下来淘宝的服务器会用一个包含了set-cookie首部的http响应报文对于张三的浏览器进行响应，其中set-cookie就含有该识别码。可能是</p>
-<ul>
-<li>Set-cookie:1678<br>当张三的浏览器收到了该HTTP响应报文时，他会看到set-cookie：首部。该浏览器在他管理的cookie文件中会添加一行，该行包含服务器的主机名和在set-cookie：首部的识别码。当张三继续浏览淘宝时，其浏览器就会查询该cookie文件并抽取他对这个网站的识别码，并放到http请求报的识别码的cookie首部行中。之后每一次发往淘宝的cookie的请求报文中就包含了一下首部行：</li>
-<li>cookie:1678<br>在这样的方式下，淘宝就可以跟踪张三的浏览记录，并为张三提供购物车服务，即淘宝可以维护张三希望购买的物品列表，这样张三在结束回话时可以一起为他们支付。</li>
-</ul>
-<p>如果张三再次访问该网站的时候，比如说是一个星期以后，她的浏览器会在其请求报文中继续放入首部行cookie：1678.淘宝将根据张三过去访问过的页面向她推荐产品，如果张三在淘宝网注册过，可以将邮件地址、银行卡相关联，这就可以解释淘宝等购物网站的点击购物功能，即在点击购买的时候不需要重新提供信用卡和姓名。</p>
-<h3 id="web缓存"><a href="#web缓存" class="headerlink" title="web缓存"></a>web缓存</h3><p>Web缓存器也叫做代理服务器，它能够代表初始的服务器来满足http请求的网络实体，并在存储空见保存最近请求过的对象的副本。<br>举一个例子，如果有一个浏览器想访问淘宝。</p>
-<ul>
-<li><ol>
-<li>浏览器首先会向web缓存器发送http请求。</li>
-</ol>
-</li>
-<li><ol start="2">
-<li>缓存服务器会查询存储空间中是否含有请求对象的副本，如果含有的话，立刻返回副本数据。</li>
-</ol>
-</li>
-<li><ol start="3">
-<li>如果web缓存器中没有该对象，他就打开一个与该对象的初始服务器的TCP连接，web缓存器则向淘宝网发送http请求，在收到请求后，淘宝的服务器会返回一个响应报文。</li>
-</ol>
-</li>
-<li><ol start="4">
-<li>当web缓存起接收到该对象是，他在本地存储空间会存储一份副本，并向客户端浏览器发送该副本。</li>
-</ol>
-</li>
-</ul>
-<p>这样以后在去访问该对象时，就可以快速返回。但是这会有一个问题，如果代理服务器备份的副本时间过长，对象已经被修改了，这样web缓存器返回回来的对象就是错误的。<br>我们使用条件GET可以解决这个问题，条件GET是指在请求报文中，我们使用GET方法，并且在请求头中包含了“If-Modified-Since”字段，这是由web缓存起发送的，缓存器在备份副本的时候会记录修改的时间，当浏览器再次请求相同的对象时，web缓存器会先向服务端发送一个包含If-Modified-Since的GET请求，如果没有被修改则返回一个304响应报文。这样虽然会影响一些效率，但是增加了安全性和可靠性。</p>
-<h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><p><a href="https://blog.csdn.net/a19881029/article/details/14002273" target="_blank" rel="noopener">HTTP请求、响应报文格式</a><br><a href="https://www.cnblogs.com/williamjie/p/9099940.html" target="_blank" rel="noopener">浅谈HTTP中GET、POST用法以及它们的区别
-</a><br><a href="https://detail.tmall.com/item.htm?spm=a220m.1000858.1000725.56.1b7127efE3BbeC&id=574793583993&user_id=101450072&cat_id=2&is_b=1&rn=6f69597db6ce41773f733a2e3368654d" target="_blank" rel="noopener">计算机网络 自顶向下方法</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -1734,7 +1680,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

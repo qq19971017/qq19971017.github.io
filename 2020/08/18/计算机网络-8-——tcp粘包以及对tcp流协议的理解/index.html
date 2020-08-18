@@ -20,20 +20,20 @@
     var CONFIG = {"hostname":"qq19971017.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="今天在使用SpringBoot 2.2.6 配置@ConfigurationProperties注解是，发生错误，看一些博客也没有解决问题，在这里记录一下。 首先查找blog，发现在pom添加 spring-boot-configuration-processor配置包就可以了，于是去maven依赖包中查找，代码如下： 12345&lt;dependency&gt;	&lt;groupId&gt;">
+  <meta name="description" content="TCP流协议TCP是一种流协议，这意着数据是以字节流的形式发送给接收者，没有固定的报文和报文边界的概念。接收端读取tcp数据是无法预知在这一次读操作中会返回多少字节。 假设主机A向主机B发送两条报文M1和M2，调用两次send发送两条独立的报文，但是数据在传输过程中并不会遵循这个方式。在发送端，send操作只是将数据复制到主机A的TCP&#x2F;IP协议栈，由TCP决定怎么发送和每次发送多少。 这个决定的">
 <meta property="og:type" content="article">
-<meta property="og:title" content="SpringBoot-2.2.6 无法配置@ConfigurationProperties">
-<meta property="og:url" content="https://qq19971017.github.io/2020/04/24/SpringBoot-2-2-6-%E6%97%A0%E6%B3%95%E9%85%8D%E7%BD%AE-ConfigurationProperties/index.html">
+<meta property="og:title" content="计算机网络(8)——tcp粘包以及对tcp流协议的理解">
+<meta property="og:url" content="https://qq19971017.github.io/2020/08/18/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-8-%E2%80%94%E2%80%94tcp%E7%B2%98%E5%8C%85%E4%BB%A5%E5%8F%8A%E5%AF%B9tcp%E6%B5%81%E5%8D%8F%E8%AE%AE%E7%9A%84%E7%90%86%E8%A7%A3/index.html">
 <meta property="og:site_name" content="学无止境">
-<meta property="og:description" content="今天在使用SpringBoot 2.2.6 配置@ConfigurationProperties注解是，发生错误，看一些博客也没有解决问题，在这里记录一下。 首先查找blog，发现在pom添加 spring-boot-configuration-processor配置包就可以了，于是去maven依赖包中查找，代码如下： 12345&lt;dependency&gt;	&lt;groupId&gt;">
+<meta property="og:description" content="TCP流协议TCP是一种流协议，这意着数据是以字节流的形式发送给接收者，没有固定的报文和报文边界的概念。接收端读取tcp数据是无法预知在这一次读操作中会返回多少字节。 假设主机A向主机B发送两条报文M1和M2，调用两次send发送两条独立的报文，但是数据在传输过程中并不会遵循这个方式。在发送端，send操作只是将数据复制到主机A的TCP&#x2F;IP协议栈，由TCP决定怎么发送和每次发送多少。 这个决定的">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2020-04-24T13:17:00.000Z">
-<meta property="article:modified_time" content="2020-05-23T14:01:25.691Z">
+<meta property="article:published_time" content="2020-08-18T11:56:00.000Z">
+<meta property="article:modified_time" content="2020-08-18T12:23:58.959Z">
 <meta property="article:author" content="Jiajun Ma">
-<meta property="article:tag" content="SpringBoot">
+<meta property="article:tag" content="计算机网络">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://qq19971017.github.io/2020/04/24/SpringBoot-2-2-6-%E6%97%A0%E6%B3%95%E9%85%8D%E7%BD%AE-ConfigurationProperties/">
+<link rel="canonical" href="https://qq19971017.github.io/2020/08/18/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-8-%E2%80%94%E2%80%94tcp%E7%B2%98%E5%8C%85%E4%BB%A5%E5%8F%8A%E5%AF%B9tcp%E6%B5%81%E5%8D%8F%E8%AE%AE%E7%9A%84%E7%90%86%E8%A7%A3/">
 
 
 <script id="page-configurations">
@@ -45,7 +45,7 @@
   };
 </script>
 
-  <title>SpringBoot-2.2.6 无法配置@ConfigurationProperties | 学无止境</title>
+  <title>计算机网络(8)——tcp粘包以及对tcp流协议的理解 | 学无止境</title>
   
 
 
@@ -186,7 +186,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/04/24/SpringBoot-2-2-6-%E6%97%A0%E6%B3%95%E9%85%8D%E7%BD%AE-ConfigurationProperties/">
+    <link itemprop="mainEntityOfPage" href="https://qq19971017.github.io/2020/08/18/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-8-%E2%80%94%E2%80%94tcp%E7%B2%98%E5%8C%85%E4%BB%A5%E5%8F%8A%E5%AF%B9tcp%E6%B5%81%E5%8D%8F%E8%AE%AE%E7%9A%84%E7%90%86%E8%A7%A3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -199,7 +199,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          SpringBoot-2.2.6 无法配置@ConfigurationProperties
+          计算机网络(8)——tcp粘包以及对tcp流协议的理解
         </h1>
 
         <div class="post-meta">
@@ -208,23 +208,17 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2020-04-24 21:17:00" itemprop="dateCreated datePublished" datetime="2020-04-24T21:17:00+08:00">2020-04-24</time>
+              <time title="创建时间：2020-08-18 19:56:00 / 修改时间：20:23:58" itemprop="dateCreated datePublished" datetime="2020-08-18T19:56:00+08:00">2020-08-18</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-05-23 22:01:25" itemprop="dateModified" datetime="2020-05-23T22:01:25+08:00">2020-05-23</time>
-              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/SpringBoot/" itemprop="url" rel="index"><span itemprop="name">SpringBoot</span></a>
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
                 </span>
             </span>
 
@@ -239,12 +233,40 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>今天在使用SpringBoot 2.2.6 配置@ConfigurationProperties注解是，发生错误，看一些博客也没有解决问题，在这里记录一下。</p>
-<p>首先查找blog，发现在pom添加 spring-boot-configuration-processor配置包就可以了，于是去maven依赖包中查找，代码如下：</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">	&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-boot-configuration-processor&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;2.2.6.RELEASE&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+        <h3 id="TCP流协议"><a href="#TCP流协议" class="headerlink" title="TCP流协议"></a>TCP流协议</h3><p>TCP是一种流协议，这意着数据是以字节流的形式发送给接收者，没有固定的报文和报文边界的概念。接收端读取tcp数据是无法预知在这一次读操作中会返回多少字节。</p>
+<p>假设主机A向主机B发送两条报文M1和M2，调用两次send发送两条独立的报文，但是数据在传输过程中并不会遵循这个方式。在发送端，send操作只是将数据复制到主机A的TCP/IP协议栈，由TCP决定怎么发送和每次发送多少。</p>
+<p>这个决定的过程很复杂，如：发送窗口、拥塞窗口、路径上的最大传输单元等。也就是说数据的发送分为很多种情况：</p>
+<ul>
+<li><ol>
+<li>M1和M2分开发送数据。</li>
+</ol>
+</li>
+<li><ol start="2">
+<li>M1和M2数据一起传输。</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>M1的先发送一部分，然后剩下的和M2一起发送。</li>
+</ol>
+</li>
+<li><ol start="4">
+<li>先发送M1和M2的一部分，然后发送M2剩下的数据。</li>
+</ol>
+</li>
+</ul>
+<h4 id="缓存发送"><a href="#缓存发送" class="headerlink" title="缓存发送"></a>缓存发送</h4><p>其实仔细看过TCP协议内容的人就可以发现，TCP协议允许发送端将几次发送的数据包缓存起来合成一个数据包发送到网络上去，因为这样可以获得更高的效率，这一行为通常是在操作系统提供的SOCKET中实现，所以在应用层对此毫无所觉。所以我们在程序中调用SOCKET的send发送了数据后操作系统有可能缓存了起来，等待后续的数据一起发送，而不是立即发送出去。send的文档中对此也有说明。</p>
+<h4 id="分包发送"><a href="#分包发送" class="headerlink" title="分包发送"></a>分包发送</h4><p>网络传输的概念中有MTU的概念，也即是网络中一个数据包最大的长度。如果要发送超过这个长度的数据包，就需要分包发送。当调用SOCKET的send发送超过MTU的数据包时，操作系统提供的SOCKET实现会自动将这个数据包分割成几个不超过MTU的数据包发送。</p>
+<h3 id="粘包"><a href="#粘包" class="headerlink" title="粘包"></a>粘包</h3><p><strong>当出现这些上面这些情况的时候，接收端就会发现接收到的数据和发送的数据的次数不一致。这个就是粘包现象。</strong></p>
+<p>当我们传输如文件这种数据时，流式的传输非常适合，但是当我们传输指令之类的数据结构时，流式模型就有一个问题：无法知道指令的结束。所以粘包必须问题是必须<strong>解决</strong>的。</p>
+<h4 id="定长结构"><a href="#定长结构" class="headerlink" title="定长结构"></a>定长结构</h4><p>因为粘包问题的存在，接收端不能想当然的以为发送端一次发送了多少数据就能一次收到多少数据。如果发送端发送了一个固定长度的数据结构，接收端必须每次都严格判断接收到额数据的长度，当收到的数据长度不足时，需要再次接收数据，直到满足长度，当收到的数据多于固定长度时，需要截断数据，并将多余的数据缓存起来，视为长度不足需要再次接收处理。</p>
+<h4 id="不定长结构"><a href="#不定长结构" class="headerlink" title="不定长结构"></a>不定长结构</h4><p>定长的数据结构是一种理想的情况，真正的应用中通常使用的都是不定长的数据结构。<br>对于发送不定长的数据结构，简单的做法就是选一个固定的字符作为数据包结束标志，接收到这个字符就代表一个数据包传输完成了。<br>但是这只能应用于字符数据，因为二进制数据中很难确定结束字符到底是结束还是原本要传输的数据内容（使用字符来标识数据的边界在传输二进制数据时时可以实现的，只是实现比较复杂和低效。想了解可以参考以太网传输协议）。<br><strong>目前最通用的做法是在每次发送的数据的固定偏移位置写入数据包的长度。</strong><br>接收端只要一开始读取固定偏移的数据就可以知道这个数据包的长度，接下来的流程就和固定长度数据结构的处理流程类似。<br>所以对于处理粘包的关键在于提前获取到数据包的长度，无论这个长度是提前商定好的还是写在在数据包的开头。<br>因为在每次发送的数据的固定偏移位置写入数据包的长度的方法是最通用的一种方法，所以对这种方法实现中的一些容易出错误的地方在此特别说明。</p>
+<ul>
+<li>通常我们使用2~4个字节来存放数据长度，多字节数据的网络传输需要注意字节序，所以要注意接受者和发送者要使用相同的字节序来解析数据长度。</li>
+<li>每次新开始接收一段数据时不要急着直接去解析数据长度，先确保目前收到的数据已经足够解析出数据长度，例如数据开头的2个字节存储了数据长度，那么一定确保接收了2个字节以上的数据后才去解析数据长度。</li>
+<li>如果没做到这一点的服务器代码，收到了一个字节就去解析数据长度的，结果得到的长度是内存中的随机值，结果必然是崩溃的。</li>
+</ul>
+<h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><p><a href="https://blog.csdn.net/bjrxyz/article/details/73351248?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.channel_param&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.channel_param" target="_blank" rel="noopener">TCP新手误区–粘包的处理</a></p>
 
-<p>但是maven始终无法解析这个依赖包，可能还未上传的缘故，解决方法，将依赖包的版本往前退一个，改为2.1.6就可以了</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">	&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-boot-configuration-processor&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;2.1.6.RELEASE&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
     </div>
 
     
@@ -259,7 +281,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://qq19971017.github.io/2020/04/24/SpringBoot-2-2-6-%E6%97%A0%E6%B3%95%E9%85%8D%E7%BD%AE-ConfigurationProperties/" title="SpringBoot-2.2.6 无法配置@ConfigurationProperties">https://qq19971017.github.io/2020/04/24/SpringBoot-2-2-6-无法配置-ConfigurationProperties/</a>
+    <a href="https://qq19971017.github.io/2020/08/18/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-8-%E2%80%94%E2%80%94tcp%E7%B2%98%E5%8C%85%E4%BB%A5%E5%8F%8A%E5%AF%B9tcp%E6%B5%81%E5%8D%8F%E8%AE%AE%E7%9A%84%E7%90%86%E8%A7%A3/" title="计算机网络(8)——tcp粘包以及对tcp流协议的理解">https://qq19971017.github.io/2020/08/18/计算机网络-8-——tcp粘包以及对tcp流协议的理解/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -270,7 +292,7 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/SpringBoot/" rel="tag"># SpringBoot</a>
+              <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag"># 计算机网络</a>
           </div>
 
         
@@ -279,13 +301,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2020/04/05/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-3-%E2%80%94%E2%80%94%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/" rel="prev" title="设计模式(3)——代理模式">
-      <i class="fa fa-chevron-left"></i> 设计模式(3)——代理模式
+    <a href="/2020/08/15/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-7-%E2%80%94%E2%80%94https/" rel="prev" title="计算机网络(7)——https">
+      <i class="fa fa-chevron-left"></i> 计算机网络(7)——https
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2020/05/23/Docker-%E5%AD%A6%E4%B9%A0/" rel="next" title="Docker 基础学习(1)">
-      Docker 基础学习(1) <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -345,6 +364,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP流协议"><span class="nav-number">1.</span> <span class="nav-text">TCP流协议</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#缓存发送"><span class="nav-number">1.1.</span> <span class="nav-text">缓存发送</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#分包发送"><span class="nav-number">1.2.</span> <span class="nav-text">分包发送</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#粘包"><span class="nav-number">2.</span> <span class="nav-text">粘包</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#定长结构"><span class="nav-number">2.1.</span> <span class="nav-text">定长结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#不定长结构"><span class="nav-number">2.2.</span> <span class="nav-text">不定长结构</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考文献"><span class="nav-number">3.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
